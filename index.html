@@ -602,9 +602,9 @@ function closeProjectModal() {
 function deleteProject(id) {
   if (confirm('Eliminare questo progetto?')) {
     appState.projects = appState.projects.filter(p => p.id !== id);
-    syncWithOneDrive();
     updateProjectDropdown();
     renderProjects();
+    syncWithOneDrive();
   }
 }
 
