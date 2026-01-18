@@ -408,6 +408,7 @@ function logout() {
 }
 
 function initializeApp() {
+  loadFromOneDrive();
   document.getElementById('activity-date').valueAsDate = new Date();
   updateProjectDropdown();
   renderProjects();
