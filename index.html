@@ -268,6 +268,93 @@ body {
 </div>
 </div>
 </div>
+  <!-- MODALE MODIFICA ATTIVITÀ -->
+<div id="edit-activity-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1001;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<h2 style="color:var(--primary);margin-bottom:20px;">✏️ Modifica Attività</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px;">
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Data</label><input type="date" id="edit-activity-date" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Persona</label><select id="edit-activity-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="">Seleziona...</option><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Progetto</label><select id="edit-activity-project" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="">Seleziona...</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Attività</label><input type="text" id="edit-activity-name" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Link</label><input type="url" id="edit-activity-link" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Ore Pianificate</label><input type="number" id="edit-activity-hours-plan" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Ore Effettive</label><input type="number" id="edit-activity-hours-actual" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Avanzamento %</label><input type="range" id="edit-activity-progress" min="0" max="100" style="width:100%;"><span id="edit-progress-value">0%</span></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Stato</label><select id="edit-activity-status" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="Da Iniziare">Da Iniziare</option><option value="In Corso">In Corso</option><option value="Completato">Completato</option><option value="In Attesa">In Attesa</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Note</label><textarea id="edit-activity-notes" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;min-height:80px;"></textarea></div>
+</div>
+<div style="display:flex;gap:10px;justify-content:center;">
+<button class="btn btn-success" onclick="saveActivityEdit()" style="flex:1;">Salva</button>
+<button class="btn btn-secondary" onclick="closeEditActivityModal()" style="flex:1;">Annulla</button>
+</div>
+</div>
+</div>
+  let activityToEdit = null;
+
+function editActivity(id) {
+  const activity = appState.activities.find(a => a.id === id);
+  if (!activity) return;
+  
+  activityToEdit = id;
+  document.getElementById('edit-activity-date').value = activity.date;
+  document.getElementById('edit-activity-person').value = activity.person;
+  document.getElementById('edit-activity-project').value = activity.project;
+  document.getElementById('edit-activity-name').value = activity.name;
+  document.getElementById('edit-activity-link').value = activity.link;
+  document.getElementById('edit-activity-hours-plan').value = activity.hoursPlan;
+  document.getElementById('edit-activity-hours-actual').value = activity.hoursActual;
+  document.getElementById('edit-activity-progress').value = activity.progress;
+  document.getElementById('edit-progress-value').textContent = activity.progress + '%';
+  document.getElementById('edit-activity-status').value = activity.status;
+  document.getElementById('edit-activity-notes').value = activity.notes;
+  
+  // Popola il dropdown dei progetti
+  const select = document.getElementById('edit-activity-project');
+  select.innerHTML = '<option value="">Seleziona...</option>' + 
+    appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
+  select.value = activity.project;
+  
+  document.getElementById('edit-activity-modal').style.display = 'flex';
+}
+
+function saveActivityEdit() {
+  if (activityToEdit === null) return;
+  
+  const activity = appState.activities.find(a => a.id === activityToEdit);
+  if (!activity) return;
+  
+  activity.date = document.getElementById('edit-activity-date').value;
+  activity.person = document.getElementById('edit-activity-person').value;
+  activity.project = document.getElementById('edit-activity-project').value;
+  activity.name = document.getElementById('edit-activity-name').value;
+  activity.link = document.getElementById('edit-activity-link').value;
+  activity.hoursPlan = parseFloat(document.getElementById('edit-activity-hours-plan').value) || 0;
+  activity.hoursActual = parseFloat(document.getElementById('edit-activity-hours-actual').value) || 0;
+  activity.progress = parseInt(document.getElementById('edit-activity-progress').value) || 0;
+  activity.status = document.getElementById('edit-activity-status').value;
+  activity.notes = document.getElementById('edit-activity-notes').value;
+  
+  syncWithOneDrive();
+  closeEditActivityModal();
+  renderActivities();
+  updateDashboard();
+}
+
+function closeEditActivityModal() {
+  document.getElementById('edit-activity-modal').style.display = 'none';
+  activityToEdit = null;
+}
+
+// Aggiorna il valore della progress quando cambia
+document.addEventListener('DOMContentLoaded', function() {
+  const progressInput = document.getElementById('edit-activity-progress');
+  if (progressInput) {
+    progressInput.addEventListener('input', function() {
+      document.getElementById('edit-progress-value').textContent = this.value + '%';
+    });
+  }
+});
 <script>
 const msalConfig = {
   auth: {
@@ -482,22 +569,23 @@ function addActivity() {
   const data = {
     id: Date.now(),
     month: appState.currentMonth,
-    date: document.getElementById('activity-date').value,
-    year: new Date(document.getElementById('activity-date').value).getFullYear(),
+    date: document.getElementById('activity-date').value || new Date().toISOString().split('T')[0],
+    year: new Date(document.getElementById('activity-date').value || new Date()).getFullYear(),
     person: document.getElementById('activity-person').value,
-    project: projectName,
+    project: projectName || 'Senza progetto',
     client: project ? project.client : '',
     name: document.getElementById('activity-name').value,
-    link: document.getElementById('activity-link').value,
+    link: document.getElementById('activity-link').value || '',
     hoursPlan: parseFloat(document.getElementById('activity-hours-plan').value) || 0,
     hoursActual: parseFloat(document.getElementById('activity-hours-actual').value) || 0,
     progress: parseInt(document.getElementById('activity-progress').value) || 0,
     status: document.getElementById('activity-status').value,
-    notes: document.getElementById('activity-notes').value
+    notes: document.getElementById('activity-notes').value || ''
   };
   
+  // Solo persona e nome attività sono obbligatori
   if (!data.person || !data.name) {
-    alert('Compila persona e attività');
+    alert('Compila almeno Persona e Attività');
     return;
   }
   
@@ -505,6 +593,8 @@ function addActivity() {
   syncWithOneDrive();
   renderActivities();
   updateDashboard();
+  
+  // Pulisci il form
   document.getElementById('activity-name').value = '';
   document.getElementById('activity-link').value = '';
   document.getElementById('activity-hours-plan').value = '';
@@ -512,6 +602,7 @@ function addActivity() {
   document.getElementById('activity-progress').value = '0';
   document.getElementById('progress-value').textContent = '0%';
   document.getElementById('activity-notes').value = '';
+  document.getElementById('activity-project').value = '';
 }
 
 function changeMonth(delta) {
@@ -540,6 +631,7 @@ function renderActivities() {
         <td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td>
         <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td>
         <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="editActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--secondary);color:white;margin-right:5px;"><i class="fas fa-edit"></i></button>
         <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td>
       </tr>
     `).join('');
