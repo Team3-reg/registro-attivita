@@ -402,9 +402,15 @@ async function notifyFirstAccess(email) {
 }
 
 function logout() {
-  msalInstance.logout();
+  localStorage.clear();
+  sessionStorage.clear();
+  accessToken = null;
+  userEmail = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
+  msalInstance.logoutPopup().catch(() => {
+    window.location.reload();
+  });
 }
 
 function initializeApp() {
