@@ -539,31 +539,36 @@ function editProject(id) {
   const project = appState.projects.find(p => p.id === id);
   if (!project) return;
   
-  const newClient = prompt('Nome Cliente:', project.client);
-  if (newClient === null) return;
+  document.getElementById('edit-project-id').value = id;
+  document.getElementById('edit-project-client').value = project.client;
+  document.getElementById('edit-project-name').value = project.name;
+  document.getElementById('edit-project-person').value = project.person;
+  document.getElementById('edit-project-budget').value = project.budget;
+  document.getElementById('edit-project-rate').value = project.rate;
+  document.getElementById('edit-project-deadline').value = project.deadline;
+  document.getElementById('edit-project-modal').style.display = 'flex';
+}
+
+function saveProjectEdit() {
+  const id = parseInt(document.getElementById('edit-project-id').value);
+  const project = appState.projects.find(p => p.id === id);
+  if (!project) return;
   
-  const newName = prompt('Nome Progetto:', project.name);
-  if (newName === null) return;
-  
-  const newBudget = prompt('Budget Ore:', project.budget);
-  if (newBudget === null) return;
-  
-  const newRate = prompt('Tariffa €/h:', project.rate);
-  if (newRate === null) return;
-  
-  const newDeadline = prompt('Scadenza (YYYY-MM-DD):', project.deadline);
-  if (newDeadline === null) return;
-  
-  project.client = newClient;
-  project.name = newName;
-  project.budget = parseFloat(newBudget) || 0;
-  project.rate = parseFloat(newRate) || 35;
-  project.deadline = newDeadline;
+  project.client = document.getElementById('edit-project-client').value;
+  project.name = document.getElementById('edit-project-name').value;
+  project.person = document.getElementById('edit-project-person').value;
+  project.budget = parseFloat(document.getElementById('edit-project-budget').value) || 0;
+  project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
+  project.deadline = document.getElementById('edit-project-deadline').value;
   
   syncWithOneDrive();
+  closeProjectModal();
   updateProjectDropdown();
   renderProjects();
-  alert('✅ Progetto modificato!');
+}
+
+function closeProjectModal() {
+  document.getElementById('edit-project-modal').style.display = 'none';
 }
 
 function deleteProject(id) {
