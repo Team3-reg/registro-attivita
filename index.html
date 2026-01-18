@@ -446,7 +446,6 @@ function addProject() {
   }
   
   appState.projects.push(data);
-  syncWithOneDrive();
   updateProjectDropdown();
   renderProjects();
   document.getElementById('project-client').value = '';
@@ -454,6 +453,9 @@ function addProject() {
   document.getElementById('project-person').value = '';
   document.getElementById('project-budget').value = '';
   document.getElementById('project-deadline').value = '';
+  
+  // Sincronizza DOPO aver aggiornato l'UI
+  syncWithOneDrive();
 }
 
 function updateProjectDropdown() {
