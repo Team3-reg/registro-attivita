@@ -228,6 +228,34 @@ body {
 </div>
 </div>
 </div>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MODALE MODIFICA PROGETTO - AGGIUNGI QUI -->
+<div id="edit-project-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h2 style="color:var(--primary);">Modifica Progetto</h2>
+<button onclick="closeProjectModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);">×</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+<input type="hidden" id="edit-project-id">
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Nome Cliente</label><input type="text" id="edit-project-client" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Nome Progetto</label><input type="text" id="edit-project-name" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Responsabile</label><select id="edit-project-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Budget Ore</label><input type="number" id="edit-project-budget" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Tariffa €/h</label><input type="number" id="edit-project-rate" min="0" value="35" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Scadenza</label><input type="date" id="edit-project-deadline" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
+</div>
+<div style="margin-top:20px;display:flex;gap:10px;">
+<button class="btn btn-success" onclick="saveProjectEdit()">Salva</button>
+<button class="btn btn-secondary" onclick="closeProjectModal()">Annulla</button>
+</div>
+</div>
+</div>
 
 <script>
 const msalConfig = {
