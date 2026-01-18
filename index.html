@@ -1,1323 +1,275 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro Attività Team</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        :root {
-            --primary: #1F4E79;
-            --secondary: #2E86C1;
-            --success: #27AE60;
-            --warning: #F39C12;
-            --danger: #E74C3C;
-            --light: #F8F9FA;
-            --gray: #6C757D;
-            --border: #DEE2E6;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-        }
-        .header-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.2);
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #163a52; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(31, 78, 121, 0.3); }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-secondary:hover { background: #1e5a8e; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #1e7e34; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: #c0392b; }
-        .nav-tabs {
-            display: flex;
-            background: var(--light);
-            border-bottom: 2px solid var(--border);
-            overflow-x: auto;
-        }
-        .nav-tab {
-            padding: 15px 25px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-weight: 600;
-            color: var(--gray);
-            transition: all 0.3s ease;
-            white-space: nowrap;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-        }
-        .nav-tab:hover { color: var(--primary); background: rgba(31, 78, 121, 0.05); }
-        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .content { padding: 30px; }
-        .dashboard { display: none; }
-        .dashboard.active { display: block; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .stat-card:hover { border-color: var(--primary); box-shadow: 0 5px 15px rgba(31, 78, 121, 0.1); }
-        .stat-card i { font-size: 32px; color: var(--primary); margin-bottom: 10px; }
-        .stat-card .label { color: var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-        .stat-card .value { font-size: 28px; font-weight: 700; color: var(--primary); }
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .chart-container { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 20px; }
-        .chart-container h3 { margin-bottom: 15px; color: var(--primary); }
-        .form-section { background: var(--light); padding: 20px; border-radius: 10px; margin-bottom: 30px; }
-        .form-section h3 { color: var(--primary); margin-bottom: 15px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-weight: 600; color: var(--primary); margin-bottom: 5px; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 2px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; transition: border-color 0.3s ease; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.1); }
-        .form-group textarea { resize: vertical; min-height: 80px; }
-        .table-container { overflow-x: auto; border: 2px solid var(--border); border-radius: 10px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        thead { background: var(--primary); color: white; }
-        th { padding: 15px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; }
-        td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
-        tbody tr:hover { background: var(--light); }
-        tbody tr:nth-child(even) { background: rgba(248, 249, 250, 0.5); }
-        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .status-da-iniziare { background: #FFF3E0; color: #F39C12; }
-        .status-in-corso { background: #E3F2FD; color: #2E86C1; }
-        .status-completato { background: #E8F5E9; color: #27AE60; }
-        .status-in-attesa { background: #FCE4EC; color: #E74C3C; }
-        .action-btns { display: flex; gap: 8px; }
-        .action-btn { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.3s ease; }
-        .action-btn-edit { background: var(--secondary); color: white; }
-        .action-btn-edit:hover { background: #1e5a8e; }
-        .action-btn-delete { background: var(--danger); color: white; }
-        .action-btn-delete:hover { background: #c0392b; }
-        .projects-grid { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 15px; scroll-behavior: smooth; }
-        .projects-grid::-webkit-scrollbar { height: 8px; }
-        .projects-grid::-webkit-scrollbar-track { background: var(--light); border-radius: 10px; }
-        .projects-grid::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
-        .project-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 20px; transition: all 0.3s ease; min-width: 350px; flex-shrink: 0; }
-        .project-card:hover { border-color: var(--primary); box-shadow: 0 5px 15px rgba(31, 78, 121, 0.1); }
-        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .project-header h4 { color: var(--primary); margin-bottom: 5px; }
-        .project-header .person { color: var(--gray); font-size: 13px; }
-        .project-client { color: var(--secondary); font-weight: 600; font-size: 12px; margin-bottom: 5px; }
-        .project-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .project-stat { background: var(--light); padding: 10px; border-radius: 6px; }
-        .project-stat .label { font-size: 12px; color: var(--gray); margin-bottom: 3px; }
-        .project-stat .value { font-weight: 700; color: var(--primary); }
-        .progress-bar { width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.3s ease; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h2 { color: var(--primary); }
-        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray); }
-        .modal-close:hover { color: var(--primary); }
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
-        .empty-state i { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
-        .empty-state p { font-size: 18px; }
-        .currency { color: var(--success); font-weight: 600; }
-        .text-center { text-align: center; }
-        .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .month-nav button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .month-nav h2 { color: var(--primary); }
-        .month-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; background: var(--light); padding: 15px; border-radius: 10px; }
-        .month-stat { text-align: center; }
-        .month-stat .label { color: var(--gray); font-size: 12px; margin-bottom: 5px; }
-        .month-stat .value { font-size: 20px; font-weight: 700; color: var(--primary); }
-        @media (max-width: 768px) {
-            .header { flex-direction: column; gap: 15px; }
-            .header-right { width: 100%; justify-content: space-between; }
-            .form-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr; }
-            table { font-size: 12px; }
-            th, td { padding: 8px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro Attività Team</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.26.0/js/msal-browser.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #1F4E79;
+  --secondary: #2E86C1;
+  --success: #27AE60;
+  --warning: #F39C12;
+  --danger: #E74C3C;
+  --light: #F8F9FA;
+  --gray: #6C757D;
+  --border: #DEE2E6;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header h1 { font-size: 28px; font-weight: 700; }
+.header-right { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.user-info { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 8px; }
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #163a52; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(31,78,121,0.3); }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-secondary:hover { background: #1e5a8e; }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #1e7e34; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #c0392b; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.nav-tabs { display: flex; background: var(--light); border-bottom: 2px solid var(--border); overflow-x: auto; }
+.nav-tab {
+  padding: 15px 25px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-weight: 600;
+  color: var(--gray);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.nav-tab:hover { color: var(--primary); background: rgba(31,78,121,0.05); }
+.nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.content { padding: 30px; }
+.dashboard { display: none; }
+.dashboard.active { display: block; }
+.filter-bar {
+  background: var(--light);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-bar label { font-weight: 600; color: var(--primary); font-size: 14px; }
+.filter-bar select { padding: 8px 12px; border: 2px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; cursor: pointer; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.stat-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; transition: all 0.3s ease; }
+.stat-card:hover { border-color: var(--primary); box-shadow: 0 5px 15px rgba(31,78,121,0.1); }
+.stat-card i { font-size: 32px; color: var(--primary); margin-bottom: 10px; }
+.stat-card .label { color: var(--gray); font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: var(--primary); }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.chart-container { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 20px; }
+.chart-container h3 { margin-bottom: 15px; color: var(--primary); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1><i class="fas fa-tasks"></i> Registro Attività Team</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Team</span>
-                </div>
-                <button class="btn btn-secondary" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> Excel
-                </button>
-                <button class="btn btn-secondary" onclick="exportToCSV()">
-                    <i class="fas fa-download"></i> CSV
-                </button>
-            </div>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard', this)">
-                <i class="fas fa-chart-line"></i> Dashboard
-            </button>
-            <button class="nav-tab" data-tab="progetti" onclick="switchTab('progetti', this)">
-                <i class="fas fa-folder"></i> Progetti
-            </button>
-            <button class="nav-tab" data-tab="gennaio" onclick="switchTab('gennaio', this)">
-                <i class="fas fa-calendar"></i> Gennaio
-            </button>
-            <button class="nav-tab" data-tab="febbraio" onclick="switchTab('febbraio', this)">Febbraio</button>
-            <button class="nav-tab" data-tab="marzo" onclick="switchTab('marzo', this)">Marzo</button>
-            <button class="nav-tab" data-tab="aprile" onclick="switchTab('aprile', this)">Aprile</button>
-            <button class="nav-tab" data-tab="maggio" onclick="switchTab('maggio', this)">Maggio</button>
-            <button class="nav-tab" data-tab="giugno" onclick="switchTab('giugno', this)">Giugno</button>
-            <button class="nav-tab" data-tab="luglio" onclick="switchTab('luglio', this)">Luglio</button>
-            <button class="nav-tab" data-tab="agosto" onclick="switchTab('agosto', this)">Agosto</button>
-            <button class="nav-tab" data-tab="settembre" onclick="switchTab('settembre', this)">Settembre</button>
-            <button class="nav-tab" data-tab="ottobre" onclick="switchTab('ottobre', this)">Ottobre</button>
-            <button class="nav-tab" data-tab="novembre" onclick="switchTab('novembre', this)">Novembre</button>
-            <button class="nav-tab" data-tab="dicembre" onclick="switchTab('dicembre', this)">Dicembre</button>
-        </div>
-
-        <div class="content">
-            <div id="dashboard" class="dashboard active">
-                <h2 style="color: var(--primary); margin-bottom: 20px;">📊 Dashboard</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fas fa-tasks"></i>
-                        <div class="label">Attività Totali</div>
-                        <div class="value" id="stat-activities">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-check-circle"></i>
-                        <div class="label">Completate</div>
-                        <div class="value" id="stat-completed">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-clock"></i>
-                        <div class="label">Ore Pianificate</div>
-                        <div class="value" id="stat-hours">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-hourglass-end"></i>
-                        <div class="label">Ore Effettive</div>
-                        <div class="value" id="stat-hours-actual">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-euro-sign"></i>
-                        <div class="label">Costo Totale</div>
-                        <div class="value currency" id="stat-cost">€0</div>
-                    </div>
-                </div>
-
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h3>Ore per Persona</h3>
-                        <canvas id="hoursByPersonChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h3>Stato Attività</h3>
-                        <canvas id="statusChart"></canvas>
-                    </div>
-                    <div class="chart-container" style="grid-column: 1 / -1;">
-                        <h3>Andamento Mensile</h3>
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div id="progetti" class="dashboard">
-                <h2 style="color: var(--primary); margin-bottom: 20px;">📁 Gestione Progetti</h2>
-                
-                <div class="form-section">
-                    <h3>Aggiungi Nuovo Progetto</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nome Cliente</label>
-                            <input type="text" id="project-client" placeholder="es. Acme Corporation">
-                        </div>
-                        <div class="form-group">
-                            <label>Nome Progetto</label>
-                            <input type="text" id="project-name" placeholder="es. Website Redesign">
-                        </div>
-                        <div class="form-group">
-                            <label>Responsabile</label>
-                            <select id="project-person">
-                                <option value="">Seleziona...</option>
-                                <option value="Francesco Marzaro">Francesco Marzaro</option>
-                                <option value="Roberto Zampieri">Roberto Zampieri</option>
-                                <option value="Saverio Manduca">Saverio Manduca</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Budget Ore</label>
-                            <input type="number" id="project-budget" placeholder="es. 120" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Tariffa €/h</label>
-                            <input type="number" id="project-rate" placeholder="35" value="35" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Scadenza</label>
-                            <input type="date" id="project-deadline">
-                        </div>
-                        <div class="form-group">
-                            <label>Stato</label>
-                            <select id="project-status">
-                                <option value="Attivo">Attivo</option>
-                                <option value="Pianificato">Pianificato</option>
-                                <option value="Completato">Completato</option>
-                                <option value="In Pausa">In Pausa</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn btn-success" onclick="addProject()">
-                        <i class="fas fa-plus"></i> Aggiungi Progetto
-                    </button>
-                </div>
-
-                <div id="projects-list" class="projects-grid"></div>
-            </div>
-
-            <div id="gennaio" class="dashboard">
-                <div class="month-nav">
-                    <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                    <h2 id="current-month">Gennaio</h2>
-                    <button onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                </div>
-
-                <div class="form-section">
-                    <h3>Aggiungi Attività</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Data</label>
-                            <input type="date" id="activity-date">
-                        </div>
-                        <div class="form-group">
-                            <label>Persona</label>
-                            <select id="activity-person">
-                                <option value="">Seleziona...</option>
-                                <option value="Francesco Marzaro">Francesco Marzaro</option>
-                                <option value="Roberto Zampieri">Roberto Zampieri</option>
-                                <option value="Saverio Manduca">Saverio Manduca</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Progetto</label>
-                            <select id="activity-project">
-                                <option value="">Seleziona...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Attività</label>
-                            <input type="text" id="activity-name" placeholder="Descrizione del task">
-                        </div>
-                        <div class="form-group">
-                            <label>Link Cartella</label>
-                            <input type="url" id="activity-link" placeholder="https://...">
-                        </div>
-                        <div class="form-group">
-                            <label>Ore Pianificate</label>
-                            <input type="number" id="activity-hours-plan" placeholder="0" min="0" step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label>Ore Effettive</label>
-                            <input type="number" id="activity-hours-actual" placeholder="0" min="0" step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label>Avanzamento %</label>
-                            <input type="range" id="activity-progress" min="0" max="100" value="0">
-                            <span id="progress-value">0%</span>
-                        </div>
-                        <div class="form-group">
-                            <label>Stato</label>
-                            <select id="activity-status">
-                                <option value="Da Iniziare">Da Iniziare</option>
-                                <option value="In Corso">In Corso</option>
-                                <option value="Completato">Completato</option>
-                                <option value="In Attesa">In Attesa</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Note</label>
-                            <textarea id="activity-notes" placeholder="Note aggiuntive..."></textarea>
-                        </div>
-                    </div>
-                    <button class="btn btn-success" onclick="addActivity()">
-                        <i class="fas fa-plus"></i> Aggiungi Attività
-                    </button>
-                </div>
-
-                <div class="month-stats">
-                    <div class="month-stat">
-                        <div class="label">Attività</div>
-                        <div class="value" id="month-total">0</div>
-                    </div>
-                    <div class="month-stat">
-                        <div class="label">Ore Pianificate</div>
-                        <div class="value" id="month-hours-plan">0</div>
-                    </div>
-                    <div class="month-stat">
-                        <div class="label">Ore Effettive</div>
-                        <div class="value" id="month-hours-actual">0</div>
-                    </div>
-                    <div class="month-stat">
-                        <div class="label">Costo</div>
-                        <div class="value currency" id="month-cost">€0</div>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Persona</th>
-                                <th>Cliente</th>
-                                <th>Progetto</th>
-                                <th>Attività</th>
-                                <th>Link</th>
-                                <th>Ore Plan</th>
-                                <th>Ore Eff</th>
-                                <th>Costo</th>
-                                <th>Avanzamento</th>
-                                <th>Stato</th>
-                                <th>Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activities-table">
-                            <tr>
-                                <td colspan="12" class="text-center" style="padding: 40px;">
-                                    <i class="fas fa-inbox" style="font-size: 32px; color: var(--gray); opacity: 0.5;"></i>
-                                    <p style="margin-top: 10px; color: var(--gray);">Nessuna attività</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="edit-project-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Modifica Progetto</h2>
-                <button class="modal-close" onclick="closeProjectModal()">×</button>
-            </div>
-            <div class="form-grid">
-                <input type="hidden" id="edit-project-id">
-                <div class="form-group">
-                    <label>Nome Cliente</label>
-                    <input type="text" id="edit-project-client">
-                </div>
-                <div class="form-group">
-                    <label>Nome Progetto</label>
-                    <input type="text" id="edit-project-name">
-                </div>
-                <div class="form-group">
-                    <label>Responsabile</label>
-                    <select id="edit-project-person">
-                        <option value="Francesco Marzaro">Francesco Marzaro</option>
-                        <option value="Roberto Zampieri">Roberto Zampieri</option>
-                        <option value="Saverio Manduca">Saverio Manduca</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Budget Ore</label>
-                    <input type="number" id="edit-project-budget" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Tariffa €/h</label>
-                    <input type="number" id="edit-project-rate" min="0" value="35">
-                </div>
-                <div class="form-group">
-                    <label>Scadenza</label>
-                    <input type="date" id="edit-project-deadline">
-                </div>
-                <div class="form-group">
-                    <label>Stato</label>
-                    <select id="edit-project-status">
-                        <option value="Attivo">Attivo</option>
-                        <option value="Pianificato">Pianificato</option>
-                        <option value="Completato">Completato</option>
-                        <option value="In Pausa">In Pausa</option>
-                    </select>
-                </div>
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button class="btn btn-success" onclick="saveProjectEdit()">Salva</button>
-                <button class="btn btn-secondary" onclick="closeProjectModal()">Annulla</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Modifica Attività</h2>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="form-grid">
-                <input type="hidden" id="edit-id">
-                <div class="form-group">
-                    <label>Data</label>
-                    <input type="date" id="edit-date">
-                </div>
-                <div class="form-group">
-                    <label>Persona</label>
-                    <select id="edit-person">
-                        <option value="Francesco Marzaro">Francesco Marzaro</option>
-                        <option value="Roberto Zampieri">Roberto Zampieri</option>
-                        <option value="Saverio Manduca">Saverio Manduca</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Progetto</label>
-                    <select id="edit-project"></select>
-                </div>
-                <div class="form-group">
-                    <label>Attività</label>
-                    <input type="text" id="edit-name">
-                </div>
-                <div class="form-group">
-                    <label>Link</label>
-                    <input type="url" id="edit-link">
-                </div>
-                <div class="form-group">
-                    <label>Ore Pianificate</label>
-                    <input type="number" id="edit-hours-plan" min="0" step="0.5">
-                </div>
-                <div class="form-group">
-                    <label>Ore Effettive</label>
-                    <input type="number" id="edit-hours-actual" min="0" step="0.5">
-                </div>
-                <div class="form-group">
-                    <label>Avanzamento %</label>
-                    <input type="range" id="edit-progress" min="0" max="100">
-                </div>
-                <div class="form-group">
-                    <label>Stato</label>
-                    <select id="edit-status">
-                        <option value="Da Iniziare">Da Iniziare</option>
-                        <option value="In Corso">In Corso</option>
-                        <option value="Completato">Completato</option>
-                        <option value="In Attesa">In Attesa</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Note</label>
-                    <textarea id="edit-notes"></textarea>
-                </div>
-            </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button class="btn btn-success" onclick="saveEdit()">Salva</button>
-                <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let appState = {
-            activities: [],
-            projects: [],
-            currentMonth: 0,
-            HOURLY_RATE: 35,
-            charts: {}
-        };
-
-        const MONTHS = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
-                       'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-        const MONTHS_IT = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-                          'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            document.getElementById('activity-date').valueAsDate = new Date();
-            updateProjectDropdown();
-            renderProjects();
-            renderActivities();
-            updateDashboard();
-            
-            document.getElementById('activity-progress').addEventListener('input', function() {
-                document.getElementById('progress-value').textContent = this.value + '%';
-            });
-        });
-
-        function saveData() {
-            localStorage.setItem('registryData', JSON.stringify({
-                activities: appState.activities,
-                projects: appState.projects
-            }));
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem('registryData');
-            if (saved) {
-                const data = JSON.parse(saved);
-                appState.activities = data.activities || [];
-                appState.projects = data.projects || [];
-            }
-        }
-
-        function switchTab(tab, element) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            element.classList.add('active');
-            
-            document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
-            
-            if (tab === 'dashboard') {
-                document.getElementById('dashboard').classList.add('active');
-                updateDashboard();
-            } else if (tab === 'progetti') {
-                document.getElementById('progetti').classList.add('active');
-            } else {
-                document.getElementById('gennaio').classList.add('active');
-                appState.currentMonth = MONTHS.indexOf(tab);
-                renderActivities();
-            }
-        }
-
-        function addProject() {
-            const data = {
-                id: Date.now(),
-                client: document.getElementById('project-client').value,
-                name: document.getElementById('project-name').value,
-                person: document.getElementById('project-person').value,
-                budget: parseFloat(document.getElementById('project-budget').value) || 0,
-                rate: parseFloat(document.getElementById('project-rate').value) || 35,
-                deadline: document.getElementById('project-deadline').value,
-                status: document.getElementById('project-status').value,
-                used: 0
-            };
-            
-            if (!data.client || !data.name || !data.person) {
-                alert('Compila cliente, nome progetto e responsabile');
-                return;
-            }
-            
-            appState.projects.push(data);
-            saveData();
-            updateProjectDropdown();
-            renderProjects();
-            document.getElementById('project-client').value = '';
-            document.getElementById('project-name').value = '';
-            document.getElementById('project-person').value = '';
-            document.getElementById('project-budget').value = '';
-            document.getElementById('project-deadline').value = '';
-        }
-
-        function renderProjects() {
-            const container = document.getElementById('projects-list');
-            
-            if (appState.projects.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <i class="fas fa-folder-open"></i>
-                        <p>Nessun progetto</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = appState.projects.map(p => {
-                const percent = p.budget > 0 ? (p.used / p.budget * 100) : 0;
-                const budgetEur = p.budget * p.rate;
-                const budgetUsedEur = p.used * p.rate;
-                const remaining = p.budget - p.used;
-                const remainingEur = budgetEur - budgetUsedEur;
-                
-                return `
-                    <div class="project-card">
-                        <div class="project-header">
-                            <div>
-                                <div class="project-client">👤 ${p.client}</div>
-                                <h4>${p.name}</h4>
-                                <div class="person">👨‍💼 ${p.person}</div>
-                            </div>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <span class="status-badge status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
-                                <div class="action-btns">
-                                    <button class="action-btn action-btn-edit" onclick="editProject(${p.id})" title="Modifica">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn action-btn-delete" onclick="deleteProject(${p.id})" title="Elimina">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="project-stats">
-                            <div class="project-stat">
-                                <div class="label">Budget Ore</div>
-                                <div class="value">${p.budget}h</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Ore Utilizzate</div>
-                                <div class="value">${p.used.toFixed(1)}h</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Ore Rimanenti</div>
-                                <div class="value">${remaining.toFixed(1)}h</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Tariffa</div>
-                                <div class="value currency">€${p.rate}/h</div>
-                            </div>
-                        </div>
-                        <div class="project-stats">
-                            <div class="project-stat">
-                                <div class="label">Budget €</div>
-                                <div class="value currency">€${budgetEur.toLocaleString()}</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Costo Attuale €</div>
-                                <div class="value currency">€${budgetUsedEur.toLocaleString()}</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Rimanente €</div>
-                                <div class="value currency">€${remainingEur.toLocaleString()}</div>
-                            </div>
-                            <div class="project-stat">
-                                <div class="label">Scadenza</div>
-                                <div class="value">${p.deadline ? new Date(p.deadline).toLocaleDateString('it-IT') : '-'}</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${Math.min(percent, 100)}%"></div>
-                        </div>
-                        <div style="margin-top: 10px; font-size: 12px; color: var(--gray); display: flex; justify-content: space-between;">
-                            <span>${percent.toFixed(1)}% ore utilizzato</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function editProject(id) {
-            const project = appState.projects.find(p => p.id === id);
-            if (!project) return;
-            
-            document.getElementById('edit-project-id').value = id;
-            document.getElementById('edit-project-client').value = project.client;
-            document.getElementById('edit-project-name').value = project.name;
-            document.getElementById('edit-project-person').value = project.person;
-            document.getElementById('edit-project-budget').value = project.budget;
-            document.getElementById('edit-project-rate').value = project.rate;
-            document.getElementById('edit-project-deadline').value = project.deadline;
-            document.getElementById('edit-project-status').value = project.status;
-            
-            document.getElementById('edit-project-modal').classList.add('active');
-        }
-
-        function saveProjectEdit() {
-            const id = parseInt(document.getElementById('edit-project-id').value);
-            const project = appState.projects.find(p => p.id === id);
-            if (!project) return;
-            
-            project.client = document.getElementById('edit-project-client').value;
-            project.name = document.getElementById('edit-project-name').value;
-            project.person = document.getElementById('edit-project-person').value;
-            project.budget = parseFloat(document.getElementById('edit-project-budget').value) || 0;
-            project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
-            project.deadline = document.getElementById('edit-project-deadline').value;
-            project.status = document.getElementById('edit-project-status').value;
-            
-            saveData();
-            closeProjectModal();
-            updateProjectDropdown();
-            renderProjects();
-        }
-
-        function closeProjectModal() {
-            document.getElementById('edit-project-modal').classList.remove('active');
-        }
-
-        function deleteProject(id) {
-            if (confirm('Eliminare questo progetto?')) {
-                appState.projects = appState.projects.filter(p => p.id !== id);
-                saveData();
-                updateProjectDropdown();
-                renderProjects();
-            }
-        }
-
-        function updateProjectDropdown() {
-            const select = document.getElementById('activity-project');
-            select.innerHTML = '<option value="">Seleziona...</option>' + 
-                appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
-            
-            const editSelect = document.getElementById('edit-project');
-            editSelect.innerHTML = appState.projects.map(p => 
-                `<option value="${p.name}">${p.client} - ${p.name}</option>`
-            ).join('');
-        }
-
-        function addActivity() {
-            const projectName = document.getElementById('activity-project').value;
-            const project = appState.projects.find(p => p.name === projectName);
-            
-            const data = {
-                id: Date.now(),
-                month: appState.currentMonth,
-                date: document.getElementById('activity-date').value,
-                person: document.getElementById('activity-person').value,
-                project: projectName,
-                client: project ? project.client : '',
-                name: document.getElementById('activity-name').value,
-                link: document.getElementById('activity-link').value,
-                hoursPlan: parseFloat(document.getElementById('activity-hours-plan').value) || 0,
-                hoursActual: parseFloat(document.getElementById('activity-hours-actual').value) || 0,
-                progress: parseInt(document.getElementById('activity-progress').value) || 0,
-                status: document.getElementById('activity-status').value,
-                notes: document.getElementById('activity-notes').value
-            };
-            
-            if (!data.person || !data.name) {
-                alert('Compila persona e attività');
-                return;
-            }
-            
-            appState.activities.push(data);
-            saveData();
-            renderActivities();
-            updateDashboard();
-            
-            document.getElementById('activity-name').value = '';
-            document.getElementById('activity-link').value = '';
-            document.getElementById('activity-hours-plan').value = '';
-            document.getElementById('activity-hours-actual').value = '';
-            document.getElementById('activity-progress').value = '0';
-            document.getElementById('progress-value').textContent = '0%';
-            document.getElementById('activity-notes').value = '';
-        }
-
-        function renderActivities() {
-            document.getElementById('current-month').textContent = MONTHS_IT[appState.currentMonth];
-            
-            const monthActivities = appState.activities.filter(a => a.month === appState.currentMonth);
-            const tbody = document.getElementById('activities-table');
-            
-            if (monthActivities.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="12" class="text-center" style="padding: 40px;">
-                            <i class="fas fa-inbox" style="font-size: 32px; color: var(--gray); opacity: 0.5;"></i>
-                            <p style="margin-top: 10px; color: var(--gray);">Nessuna attività</p>
-                        </td>
-                    </tr>
-                `;
-            } else {
-                tbody.innerHTML = monthActivities.map(a => `
-                    <tr>
-                        <td>${new Date(a.date).toLocaleDateString('it-IT')}</td>
-                        <td>${a.person}</td>
-                        <td>${a.client}</td>
-                        <td>${a.project}</td>
-                        <td>${a.name}</td>
-                        <td>${a.link ? `<a href="${a.link}" target="_blank"><i class="fas fa-external-link-alt"></i></a>` : '-'}</td>
-                        <td>${a.hoursPlan}</td>
-                        <td>${a.hoursActual}</td>
-                        <td class="currency">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td>
-                        <td>${a.progress}%</td>
-                        <td><span class="status-badge status-${a.status.toLowerCase().replace(' ', '-')}">${a.status}</span></td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="action-btn action-btn-edit" onclick="editActivity(${a.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn action-btn-delete" onclick="deleteActivity(${a.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-            
-            const total = monthActivities.length;
-            const hoursPlan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
-            const hoursActual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
-            const cost = hoursActual * appState.HOURLY_RATE;
-            
-            document.getElementById('month-total').textContent = total;
-            document.getElementById('month-hours-plan').textContent = hoursPlan.toFixed(1);
-            document.getElementById('month-hours-actual').textContent = hoursActual.toFixed(1);
-            document.getElementById('month-cost').textContent = `€${cost.toFixed(0)}`;
-            
-            updateProjectHours();
-        }
-
-        function editActivity(id) {
-            const activity = appState.activities.find(a => a.id === id);
-            if (!activity) return;
-            
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-date').value = activity.date;
-            document.getElementById('edit-person').value = activity.person;
-            document.getElementById('edit-project').value = activity.project;
-            document.getElementById('edit-name').value = activity.name;
-            document.getElementById('edit-link').value = activity.link;
-            document.getElementById('edit-hours-plan').value = activity.hoursPlan;
-            document.getElementById('edit-hours-actual').value = activity.hoursActual;
-            document.getElementById('edit-progress').value = activity.progress;
-            document.getElementById('edit-status').value = activity.status;
-            document.getElementById('edit-notes').value = activity.notes;
-            
-            document.getElementById('edit-modal').classList.add('active');
-        }
-
-        function saveEdit() {
-            const id = parseInt(document.getElementById('edit-id').value);
-            const activity = appState.activities.find(a => a.id === id);
-            if (!activity) return;
-            
-            activity.date = document.getElementById('edit-date').value;
-            activity.person = document.getElementById('edit-person').value;
-            activity.project = document.getElementById('edit-project').value;
-            activity.name = document.getElementById('edit-name').value;
-            activity.link = document.getElementById('edit-link').value;
-            activity.hoursPlan = parseFloat(document.getElementById('edit-hours-plan').value) || 0;
-            activity.hoursActual = parseFloat(document.getElementById('edit-hours-actual').value) || 0;
-            activity.progress = parseInt(document.getElementById('edit-progress').value) || 0;
-            activity.status = document.getElementById('edit-status').value;
-            activity.notes = document.getElementById('edit-notes').value;
-            
-            saveData();
-            closeModal();
-            renderActivities();
-            updateDashboard();
-        }
-
-        function deleteActivity(id) {
-            if (confirm('Eliminare questa attività?')) {
-                appState.activities = appState.activities.filter(a => a.id !== id);
-                saveData();
-                renderActivities();
-                updateDashboard();
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('edit-modal').classList.remove('active');
-        }
-
-        function changeMonth(delta) {
-            appState.currentMonth += delta;
-            if (appState.currentMonth > 11) appState.currentMonth = 0;
-            if (appState.currentMonth < 0) appState.currentMonth = 11;
-            renderActivities();
-        }
-
-        function updateProjectHours() {
-            appState.projects.forEach(p => {
-                p.used = appState.activities
-                    .filter(a => a.project === p.name)
-                    .reduce((sum, a) => sum + a.hoursActual, 0);
-            });
-            renderProjects();
-        }
-
-        function updateDashboard() {
-            const totalActivities = appState.activities.length;
-            const completedActivities = appState.activities.filter(a => a.progress >= 100).length;
-            const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
-            const totalHoursActual = appState.activities.reduce((sum, a) => sum + a.hoursActual, 0);
-            const totalCost = totalHoursActual * appState.HOURLY_RATE;
-            
-            document.getElementById('stat-activities').textContent = totalActivities;
-            document.getElementById('stat-completed').textContent = completedActivities;
-            document.getElementById('stat-hours').textContent = totalHoursPlan.toFixed(1);
-            document.getElementById('stat-hours-actual').textContent = totalHoursActual.toFixed(1);
-            document.getElementById('stat-cost').textContent = `€${totalCost.toFixed(0)}`;
-            
-            const personHours = {};
-            appState.activities.forEach(a => {
-                if (!personHours[a.person]) personHours[a.person] = { plan: 0, actual: 0 };
-                personHours[a.person].plan += a.hoursPlan;
-                personHours[a.person].actual += a.hoursActual;
-            });
-            
-            if (appState.charts.hoursByPerson) appState.charts.hoursByPerson.destroy();
-            const ctx1 = document.getElementById('hoursByPersonChart');
-            if (ctx1) {
-                appState.charts.hoursByPerson = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(personHours),
-                        datasets: [{
-                            label: 'Ore Pianificate',
-                            data: Object.values(personHours).map(p => p.plan),
-                            backgroundColor: '#1F4E79'
-                        }, {
-                            label: 'Ore Effettive',
-                            data: Object.values(personHours).map(p => p.actual),
-                            backgroundColor: '#2E86C1'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-            
-            const statusCount = { 'Da Iniziare': 0, 'In Corso': 0, 'Completato': 0, 'In Attesa': 0 };
-            appState.activities.forEach(a => {
-                if (statusCount[a.status] !== undefined) statusCount[a.status]++;
-            });
-            
-            if (appState.charts.status) appState.charts.status.destroy();
-            const ctx2 = document.getElementById('statusChart');
-            if (ctx2) {
-                appState.charts.status = new Chart(ctx2, {
-                    type: 'pie',
-                    data: {
-                        labels: Object.keys(statusCount),
-                        datasets: [{
-                            data: Object.values(statusCount),
-                            backgroundColor: ['#F39C12', '#2E86C1', '#27AE60', '#E74C3C']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-            
-            const monthlyData = MONTHS.map((_, i) => {
-                const monthActivities = appState.activities.filter(a => a.month === i);
-                return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
-            });
-            
-            if (appState.charts.monthly) appState.charts.monthly.destroy();
-            const ctx3 = document.getElementById('monthlyChart');
-            if (ctx3) {
-                appState.charts.monthly = new Chart(ctx3, {
-                    type: 'line',
-                    data: {
-                        labels: MONTHS_IT,
-                        datasets: [{
-                            label: 'Ore Mensili',
-                            data: monthlyData,
-                            borderColor: '#1F4E79',
-                            backgroundColor: 'rgba(31, 78, 121, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-        }
-
-        function exportToExcel() {
-            try {
-                const workbook = new ExcelJS.Workbook();
-                
-                const wsActivities = workbook.addWorksheet('Attività');
-                wsActivities.columns = [
-                    { header: 'Data', key: 'date', width: 12 },
-                    { header: 'Persona', key: 'person', width: 18 },
-                    { header: 'Cliente', key: 'client', width: 18 },
-                    { header: 'Progetto', key: 'project', width: 20 },
-                    { header: 'Attività', key: 'name', width: 30 },
-                    { header: 'Link', key: 'link', width: 25 },
-                    { header: 'Ore Pianificate', key: 'hoursPlan', width: 14 },
-                    { header: 'Ore Effettive', key: 'hoursActual', width: 14 },
-                    { header: 'Differenza', key: 'diff', width: 12 },
-                    { header: 'Avanzamento %', key: 'progress', width: 14 },
-                    { header: 'Costo €', key: 'cost', width: 12 },
-                    { header: 'Stato', key: 'status', width: 14 },
-                    { header: 'Note', key: 'notes', width: 25 }
-                ];
-                
-                wsActivities.getRow(1).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF1F4E79' }
-                };
-                wsActivities.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                wsActivities.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
-                
-                appState.activities.forEach((a) => {
-                    const cost = a.hoursActual * appState.HOURLY_RATE;
-                    const diff = a.hoursActual - a.hoursPlan;
-                    wsActivities.addRow({
-                        date: a.date,
-                        person: a.person,
-                        client: a.client,
-                        project: a.project,
-                        name: a.name,
-                        link: a.link,
-                        hoursPlan: a.hoursPlan,
-                        hoursActual: a.hoursActual,
-                        diff: diff,
-                        progress: a.progress,
-                        cost: cost,
-                        status: a.status,
-                        notes: a.notes
-                    });
-                });
-                
-                const wsProjects = workbook.addWorksheet('Progetti');
-                wsProjects.columns = [
-                    { header: 'Cliente', key: 'client', width: 20 },
-                    { header: 'Nome Progetto', key: 'name', width: 25 },
-                    { header: 'Responsabile', key: 'person', width: 18 },
-                    { header: 'Budget Ore', key: 'budget', width: 14 },
-                    { header: 'Ore Utilizzate', key: 'used', width: 16 },
-                    { header: 'Ore Rimanenti', key: 'remaining', width: 16 },
-                    { header: 'Tariffa €/h', key: 'rate', width: 12 },
-                    { header: 'Budget €', key: 'budgetEur', width: 14 },
-                    { header: 'Costo Attuale €', key: 'usedEur', width: 16 },
-                    { header: 'Rimanente €', key: 'remainingEur', width: 14 },
-                    { header: 'Avanzamento %', key: 'percent', width: 14 },
-                    { header: 'Scadenza', key: 'deadline', width: 14 },
-                    { header: 'Stato', key: 'status', width: 14 }
-                ];
-                
-                wsProjects.getRow(1).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF1F4E79' }
-                };
-                wsProjects.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                wsProjects.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
-                
-                appState.projects.forEach(p => {
-                    const budget = p.budget || 0;
-                    const used = p.used || 0;
-                    const rate = p.rate || 35;
-                    const remaining = budget - used;
-                    const budgetEur = budget * rate;
-                    const usedEur = used * rate;
-                    const remainingEur = budgetEur - usedEur;
-                    const percent = budget > 0 ? (used / budget * 100) : 0;
-                    
-                    wsProjects.addRow({
-                        client: p.client,
-                        name: p.name,
-                        person: p.person,
-                        budget: budget,
-                        used: used,
-                        remaining: remaining,
-                        rate: rate,
-                        budgetEur: budgetEur,
-                        usedEur: usedEur,
-                        remainingEur: remainingEur,
-                        percent: percent,
-                        deadline: p.deadline,
-                        status: p.status
-                    });
-                });
-                
-                const wsSummary = workbook.addWorksheet('Riepilogo');
-                
-                const totalActivities = appState.activities.length;
-                const completed = appState.activities.filter(a => a.progress >= 100).length;
-                const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
-                const totalHoursActual = appState.activities.reduce((sum, a) => sum + a.hoursActual, 0);
-                const totalCost = totalHoursActual * appState.HOURLY_RATE;
-                
-                wsSummary.addRow(['RIEPILOGO ATTIVITÀ']);
-                wsSummary.addRow([]);
-                wsSummary.addRow(['Metrica', 'Valore']);
-                wsSummary.addRow(['Attività Totali', totalActivities]);
-                wsSummary.addRow(['Attività Completate', completed]);
-                wsSummary.addRow(['Ore Pianificate', totalHoursPlan]);
-                wsSummary.addRow(['Ore Effettive', totalHoursActual]);
-                wsSummary.addRow(['Costo Totale €', totalCost]);
-                
-                wsSummary.addRow([]);
-                wsSummary.addRow(['RIEPILOGO PER PERSONA']);
-                wsSummary.addRow(['Persona', 'Attività', 'Ore Pianificate', 'Ore Effettive', 'Costo €']);
-                
-                const personSummary = {};
-                appState.activities.forEach(a => {
-                    if (!personSummary[a.person]) {
-                        personSummary[a.person] = { count: 0, plan: 0, actual: 0 };
-                    }
-                    personSummary[a.person].count += 1;
-                    personSummary[a.person].plan += a.hoursPlan || 0;
-                    personSummary[a.person].actual += a.hoursActual || 0;
-                });
-                
-                Object.entries(personSummary).forEach(([person, data]) => {
-                    wsSummary.addRow([person, data.count, data.plan, data.actual, data.actual * appState.HOURLY_RATE]);
-                });
-                
-                wsSummary.columns = [
-                    { width: 25 },
-                    { width: 14 },
-                    { width: 16 },
-                    { width: 16 },
-                    { width: 14 }
-                ];
-                
-                wsSummary.getRow(1).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF1F4E79' }
-                };
-                wsSummary.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14 };
-                wsSummary.getRow(1).alignment = { horizontal: 'center' };
-                
-                wsSummary.getRow(3).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF2E86C1' }
-                };
-                wsSummary.getRow(3).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                
-                wsSummary.getRow(11).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF2E86C1' }
-                };
-                wsSummary.getRow(11).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                
-                const wsMonths = workbook.addWorksheet('Mesi');
-                wsMonths.columns = [
-                    { header: 'Mese', key: 'month', width: 15 },
-                    { header: 'Attività', key: 'count', width: 12 },
-                    { header: 'Ore Pianificate', key: 'plan', width: 16 },
-                    { header: 'Ore Effettive', key: 'actual', width: 16 },
-                    { header: 'Costo €', key: 'cost', width: 14 }
-                ];
-                
-                wsMonths.getRow(1).fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: 'FF1F4E79' }
-                };
-                wsMonths.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                wsMonths.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
-                
-                MONTHS_IT.forEach((month, idx) => {
-                    const monthActivities = appState.activities.filter(a => a.month === idx);
-                    const count = monthActivities.length;
-                    const plan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
-                    const actual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
-                    const cost = actual * appState.HOURLY_RATE;
-                    
-                    wsMonths.addRow({
-                        month: month,
-                        count: count,
-                        plan: plan,
-                        actual: actual,
-                        cost: cost
-                    });
-                });
-                
-                workbook.xlsx.writeBuffer().then(buffer => {
-                    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `registro_attivita_${new Date().toISOString().split('T')[0]}.xlsx`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                });
-            } catch (e) {
-                console.error('Errore:', e);
-                alert('Errore durante l\'esportazione Excel. Prova con CSV.');
-                exportToCSV();
-            }
-        }
-
-        function exportToCSV() {
-            let csv = 'Data,Persona,Cliente,Progetto,Attività,Link,Ore Pianificate,Ore Effettive,Avanzamento,Stato,Costo\n';
-            
-            appState.activities.forEach(a => {
-                const cost = a.hoursActual * appState.HOURLY_RATE;
-                csv += `"${a.date}","${a.person}","${a.client}","${a.project}","${a.name}","${a.link}",${a.hoursPlan},${a.hoursActual},${a.progress}%,"${a.status}",€${cost.toFixed(0)}\n`;
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `registro_attivita_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-        }
-
-        document.getElementById('edit-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-
-        document.getElementById('edit-project-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeProjectModal();
-        });
-    </script>
+<div class="container">
+<div class="header">
+<div><h1><i class="fas fa-tasks"></i> Registro Attività Team</h1></div>
+<div class="header-right">
+<div class="user-info"><i class="fas fa-user-circle"></i><span>Team</span></div>
+<button class="btn btn-secondary" onclick="loginToOneDrive()" id="onedrive-btn"><i class="fas fa-cloud"></i> OneDrive</button>
+<span class="onedrive-status" id="onedrive-status"></span>
+<button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+<button class="btn btn-secondary" onclick="exportToCSV()"><i class="fas fa-download"></i> CSV</button>
+</div>
+</div>
+<div class="nav-tabs">
+<button class="nav-tab active" onclick="switchTab('dashboard',this)"><i class="fas fa-chart-line"></i> Dashboard</button>
+<button class="nav-tab" onclick="switchTab('progetti',this)"><i class="fas fa-folder"></i> Progetti</button>
+<button class="nav-tab" onclick="switchTab('gennaio',this)"><i class="fas fa-calendar"></i> Gennaio</button>
+<button class="nav-tab" onclick="switchTab('febbraio',this)">Febbraio</button>
+<button class="nav-tab" onclick="switchTab('marzo',this)">Marzo</button>
+<button class="nav-tab" onclick="switchTab('aprile',this)">Aprile</button>
+<button class="nav-tab" onclick="switchTab('maggio',this)">Maggio</button>
+<button class="nav-tab" onclick="switchTab('giugno',this)">Giugno</button>
+<button class="nav-tab" onclick="switchTab('luglio',this)">Luglio</button>
+<button class="nav-tab" onclick="switchTab('agosto',this)">Agosto</button>
+<button class="nav-tab" onclick="switchTab('settembre',this)">Settembre</button>
+<button class="nav-tab" onclick="switchTab('ottobre',this)">Ottobre</button>
+<button class="nav-tab" onclick="switchTab('novembre',this)">Novembre</button>
+<button class="nav-tab" onclick="switchTab('dicembre',this)">Dicembre</button>
+</div>
+<div class="content">
+<div id="dashboard" class="dashboard active">
+<h2 style="color:var(--primary);margin-bottom:20px;">📊 Dashboard</h2>
+<div class="filter-bar">
+<label>Anno:</label>
+<select id="year-filter" onchange="updateDashboard()"><option value="">Tutti gli anni</option></select>
+<label>Persona:</label>
+<select id="person-filter" onchange="updateDashboard()">
+<option value="">Tutte le persone</option>
+<option value="Francesco Marzaro">Francesco Marzaro</option>
+<option value="Roberto Zampieri">Roberto Zampieri</option>
+<option value="Saverio Manduca">Saverio Manduca</option>
+</select>
+</div>
+<div class="stats-grid">
+<div class="stat-card"><i class="fas fa-tasks"></i><div class="label">Attività Totali</div><div class="value" id="stat-activities">0</div></div>
+<div class="stat-card"><i class="fas fa-check-circle"></i><div class="label">Completate</div><div class="value" id="stat-completed">0</div></div>
+<div class="stat-card"><i class="fas fa-clock"></i><div class="label">Ore Pianificate</div><div class="value" id="stat-hours">0</div></div>
+<div class="stat-card"><i class="fas fa-hourglass-end"></i><div class="label">Ore Effettive</div><div class="value" id="stat-hours-actual">0</div></div>
+<div class="stat-card"><i class="fas fa-euro-sign"></i><div class="label">Costo Totale</div><div class="value currency" id="stat-cost">€0</div></div>
+</div>
+<div class="charts-grid">
+<div class="chart-container"><h3>Ore per Persona</h3><canvas id="hoursByPersonChart"></canvas></div>
+<div class="chart-container"><h3>Stato Attività</h3><canvas id="statusChart"></canvas></div>
+<div class="chart-container" style="grid-column:1/-1;"><h3>Andamento Mensile</h3><canvas id="monthlyChart"></canvas></div>
+</div>
+</div>
+<div id="progetti" class="dashboard">
+<h2 style="color:var(--primary);margin-bottom:20px;">📁 Gestione Progetti</h2>
+<div class="form-section" style="background:var(--light);padding:20px;border-radius:10px;margin-bottom:30px;">
+<h3 style="color:var(--primary);margin-bottom:15px;">Aggiungi Nuovo Progetto</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px;">
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Nome Cliente</label><input type="text" id="project-client" placeholder="es. Acme Corporation" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Nome Progetto</label><input type="text" id="project-name" placeholder="es. Website Redesign" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Responsabile</label><select id="project-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="">Seleziona...</option><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Budget Ore</label><input type="number" id="project-budget" placeholder="es. 120" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Tariffa €/h</label><input type="number" id="project-rate" placeholder="35" value="35" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Scadenza</label><input type="date" id="project-deadline" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Stato</label><select id="project-status" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Attivo">Attivo</option><option value="Pianificato">Pianificato</option><option value="Completato">Completato</option><option value="In Pausa">In Pausa</option></select></div>
+</div>
+<button class="btn btn-success" onclick="addProject()"><i class="fas fa-plus"></i> Aggiungi Progetto</button>
+</div>
+<div id="projects-list" style="display:flex;gap:20px;overflow-x:auto;padding-bottom:15px;scroll-behavior:smooth;"></div>
+</div>
+<div id="gennaio" class="dashboard">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<button onclick="changeMonth(-1)" style="background:var(--primary);color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
+<h2 id="current-month" style="color:var(--primary);">Gennaio</h2>
+<button onclick="changeMonth(1)" style="background:var(--primary);color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
+</div>
+<div class="form-section" style="background:var(--light);padding:20px;border-radius:10px;margin-bottom:30px;">
+<h3 style="color:var(--primary);margin-bottom:15px;">Aggiungi Attività</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px;">
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Data</label><input type="date" id="activity-date" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Persona</label><select id="activity-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="">Seleziona...</option><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Progetto</label><select id="activity-project" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="">Seleziona...</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Attività</label><input type="text" id="activity-name" placeholder="Descrizione del task" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Link Cartella</label><input type="url" id="activity-link" placeholder="https://..." style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Ore Pianificate</label><input type="number" id="activity-hours-plan" placeholder="0" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Ore Effettive</label><input type="number" id="activity-hours-actual" placeholder="0" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Avanzamento %</label><input type="range" id="activity-progress" min="0" max="100" value="0" style="padding:10px;"><span id="progress-value">0%</span></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Stato</label><select id="activity-status" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Da Iniziare">Da Iniziare</option><option value="In Corso">In Corso</option><option value="Completato">Completato</option><option value="In Attesa">In Attesa</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Note</label><textarea id="activity-notes" placeholder="Note aggiuntive..." style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;resize:vertical;min-height:80px;"></textarea></div>
+</div>
+<button class="btn btn-success" onclick="addActivity()"><i class="fas fa-plus"></i> Aggiungi Attività</button>
+</div>
+<div class="month-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px;background:var(--light);padding:15px;border-radius:10px;">
+<div style="text-align:center;"><div style="color:var(--gray);font-size:12px;margin-bottom:5px;">Attività</div><div style="font-size:20px;font-weight:700;color:var(--primary);" id="month-total">0</div></div>
+<div style="text-align:center;"><div style="color:var(--gray);font-size:12px;margin-bottom:5px;">Ore Pianificate</div><div style="font-size:20px;font-weight:700;color:var(--primary);" id="month-hours-plan">0</div></div>
+<div style="text-align:center;"><div style="color:var(--gray);font-size:12px;margin-bottom:5px;">Ore Effettive</div><div style="font-size:20px;font-weight:700;color:var(--primary);" id="month-hours-actual">0</div></div>
+<div style="text-align:center;"><div style="color:var(--gray);font-size:12px;margin-bottom:5px;">Costo</div><div style="font-size:20px;font-weight:700;color:var(--success);" id="month-cost">€0</div></div>
+</div>
+<div style="overflow-x:auto;border:2px solid var(--border);border-radius:10px;margin-bottom:20px;">
+<table style="width:100%;border-collapse:collapse;">
+<thead style="background:var(--primary);color:white;">
+<tr><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Data</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Persona</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Cliente</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Progetto</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Attività</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Link</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Ore Plan</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Ore Eff</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Costo</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Avanzamento</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Stato</th><th style="padding:15px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;">Azioni</th></tr>
+</thead>
+<tbody id="activities-table" style="background:white;">
+<tr><td colspan="12" style="padding:40px;text-align:center;color:var(--gray);"><i class="fas fa-inbox" style="font-size:32px;opacity:0.5;"></i><p style="margin-top:10px;">Nessuna attività</p></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div id="edit-project-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h2 style="color:var(--primary);">Modifica Progetto</h2>
+<button onclick="closeProjectModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);">×</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+<input type="hidden" id="edit-project-id">
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Nome Cliente</label><input type="text" id="edit-project-client" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Nome Progetto</label><input type="text" id="edit-project-name" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Responsabile</label><select id="edit-project-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Budget Ore</label><input type="number" id="edit-project-budget" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Tariffa €/h</label><input type="number" id="edit-project-rate" min="0" value="35" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Scadenza</label><input type="date" id="edit-project-deadline" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Stato</label><select id="edit-project-status" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Attivo">Attivo</option><option value="Pianificato">Pianificato</option><option value="Completato">Completato</option><option value="In Pausa">In Pausa</option></select></div>
+</div>
+<div style="margin-top:20px;display:flex;gap:10px;">
+<button class="btn btn-success" onclick="saveProjectEdit()">Salva</button>
+<button class="btn btn-secondary" onclick="closeProjectModal()">Annulla</button>
+</div>
+</div>
+</div>
+<div id="edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+<div style="background:white;border-radius:12px;padding:30px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h2 style="color:var(--primary);">Modifica Attività</h2>
+<button onclick="closeModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);">×</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+<input type="hidden" id="edit-id">
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Data</label><input type="date" id="edit-date" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Persona</label><select id="edit-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Progetto</label><select id="edit-project" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Attività</label><input type="text" id="edit-name" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Link</label><input type="url" id="edit-link" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Ore Pianificate</label><input type="number" id="edit-hours-plan" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Ore Effettive</label><input type="number" id="edit-hours-actual" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Avanzamento %</label><input type="range" id="edit-progress" min="0" max="100" style="padding:10px;"></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Stato</label><select id="edit-status" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;"><option value="Da Iniziare">Da Iniziare</option><option value="In Corso">In Corso</option><option value="Completato">Completato</option><option value="In Attesa">In Attesa</option></select></div>
+<div style="display:flex;flex-direction:column;"><label style="font-weight:600;color:var(--primary);margin-bottom:5px;font-size:14px;">Note</label><textarea id="edit-notes" style="padding:10px;border:2px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px;resize:vertical;min-height:80px;"></textarea></div>
+</div>
+<div style="margin-top:20px;display:flex;gap:10px;">
+<button class="btn btn-success" onclick="saveEdit()">Salva</button>
+<button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+</div>
+</div>
+</div>
 </body>
 </html>
+<script>
+<script>
+const msalConfig={auth:{clientId:"2a14e77e-36fc-4e4a-b7c9-cd2450be114e",authority:"
