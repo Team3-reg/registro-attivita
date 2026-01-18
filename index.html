@@ -273,3 +273,481 @@ body {
 <script>
 <script>
 const msalConfig={auth:{clientId:"2a14e77e-36fc-4e4a-b7c9-cd2450be114e",authority:"
+<script>
+const msalConfig = {
+  auth: {
+    clientId: "2a14e77e-36fc-4e4a-b7c9-cd2450be114e",
+    authority: "
+      <script>
+function editActivity(id) {
+  const activity = appState.activities.find(a => a.id === id);
+  if (!activity) return;
+  
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-date').value = activity.date;
+  document.getElementById('edit-person').value = activity.person;
+  document.getElementById('edit-project').value = activity.project;
+  document.getElementById('edit-name').value = activity.name;
+  document.getElementById('edit-link').value = activity.link;
+  document.getElementById('edit-hours-plan').value = activity.hoursPlan;
+  document.getElementById('edit-hours-actual').value = activity.hoursActual;
+  document.getElementById('edit-progress').value = activity.progress;
+  document.getElementById('edit-status').value = activity.status;
+  document.getElementById('edit-notes').value = activity.notes;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const activity = appState.activities.find(a => a.id === id);
+  if (!activity) return;
+  
+  activity.date = document.getElementById('edit-date').value;
+  activity.year = new Date(activity.date).getFullYear();
+  activity.person = document.getElementById('edit-person').value;
+  activity.project = document.getElementById('edit-project').value;
+  activity.name = document.getElementById('edit-name').value;
+  activity.link = document.getElementById('edit-link').value;
+  activity.hoursPlan = parseFloat(document.getElementById('edit-hours-plan').value) || 0;
+  activity.hoursActual = parseFloat(document.getElementById('edit-hours-actual').value) || 0;
+  activity.progress = parseInt(document.getElementById('edit-progress').value) || 0;
+  activity.status = document.getElementById('edit-status').value;
+  activity.notes = document.getElementById('edit-notes').value;
+  
+  saveData();
+  closeModal();
+  renderActivities();
+  updateDashboard();
+}
+
+function deleteActivity(id) {
+  if (confirm('Eliminare questa attività?')) {
+    appState.activities = appState.activities.filter(a => a.id !== id);
+    saveData();
+    renderActivities();
+    updateDashboard();
+  }
+}
+
+function editProject(id) {
+  const project = appState.projects.find(p => p.id === id);
+  if (!project) return;
+  
+  document.getElementById('edit-project-id').value = id;
+  document.getElementById('edit-project-client').value = project.client;
+  document.getElementById('edit-project-name').value = project.name;
+  document.getElementById('edit-project-person').value = project.person;
+  document.getElementById('edit-project-budget').value = project.budget;
+  document.getElementById('edit-project-rate').value = project.rate;
+  document.getElementById('edit-project-deadline').value = project.deadline;
+  document.getElementById('edit-project-status').value = project.status;
+  document.getElementById('edit-project-modal').style.display = 'flex';
+}
+
+function saveProjectEdit() {
+  const id = parseInt(document.getElementById('edit-project-id').value);
+  const project = appState.projects.find(p => p.id === id);
+  if (!project) return;
+  
+  project.client = document.getElementById('edit-project-client').value;
+  project.name = document.getElementById('edit-project-name').value;
+  project.person = document.getElementById('edit-project-person').value;
+  project.budget = parseFloat(document.getElementById('edit-project-budget').value) || 0;
+  project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
+  project.deadline = document.getElementById('edit-project-deadline').value;
+  project.status = document.getElementById('edit-project-status').value;
+  
+  saveData();
+  closeProjectModal();
+  updateProjectDropdown();
+  renderProjects();
+}
+
+function deleteProject(id) {
+  if (confirm('Eliminare questo progetto?')) {
+    appState.projects = appState.projects.filter(p => p.id !== id);
+    saveData();
+    updateProjectDropdown();
+    renderProjects();
+  }
+}
+
+function renderActivities() {
+  document.getElementById('current-month').textContent = MONTHS_IT[appState.currentMonth];
+  const monthActivities = appState.activities.filter(a => a.month === appState.currentMonth);
+  const tbody = document.getElementById('activities-table');
+  
+  if (monthActivities.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" style="padding:40px;text-align:center;color:var(--gray);"><i class="fas fa-inbox" style="font-size:32px;opacity:0.5;"></i><p style="margin-top:10px;">Nessuna attività</p></td></tr>';
+  } else {
+    tbody.innerHTML = monthActivities.map(a => `
+      <tr>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.client}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.link ? `<a href="${a.link}" target="_blank"><i class="fas fa-external-link-alt"></i></a>` : '-'}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td>
+        <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><div style="display:flex;gap:8px;"><button onclick="editActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:var(--secondary);color:white;"><i class="fas fa-edit"></i></button><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></div></td>
+      </tr>
+    `).join('');
+  }
+  
+  const total = monthActivities.length;
+  const hoursPlan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
+  const hoursActual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+  const cost = hoursActual * appState.HOURLY_RATE;
+  
+  document.getElementById('month-total').textContent = total;
+  document.getElementById('month-hours-plan').textContent = hoursPlan.toFixed(1);
+  document.getElementById('month-hours-actual').textContent = hoursActual.toFixed(1);
+  document.getElementById('month-cost').textContent = `€${cost.toFixed(0)}`;
+  
+  updateProjectHours();
+}
+
+function renderProjects() {
+  const container = document.getElementById('projects-list');
+  if (appState.projects.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray);"><i class="fas fa-folder-open" style="font-size:64px;margin-bottom:20px;opacity:0.5;"></i><p style="font-size:18px;">Nessun progetto</p></div>';
+    return;
+  }
+  
+  container.innerHTML = appState.projects.map(p => {
+    const percent = p.budget > 0 ? (p.used / p.budget * 100) : 0;
+    const budgetEur = p.budget * p.rate;
+    const budgetUsedEur = p.used * p.rate;
+    const remaining = p.budget - p.used;
+    const remainingEur = budgetEur - budgetUsedEur;
+    
+    return `<div style="background:white;border:2px solid var(--border);border-radius:10px;padding:20px;transition:all 0.3s ease;min-width:350px;flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;">
+        <div>
+          <div style="color:var(--secondary);font-weight:600;font-size:12px;margin-bottom:5px;">👤 ${p.client}</div>
+          <h4 style="color:var(--primary);margin-bottom:5px;">${p.name}</h4>
+          <div style="color:var(--gray);font-size:13px;">👨‍💼 ${p.person}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;background:#E3F2FD;color:#2E86C1;">${p.status}</span>
+          <div style="display:flex;gap:8px;">
+            <button onclick="editProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:var(--secondary);color:white;"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:14px;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;">
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Budget Ore</div><div style="font-weight:700;color:var(--primary);">${p.budget}h</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Ore Utilizzate</div><div style="font-weight:700;color:var(--primary);">${p.used.toFixed(1)}h</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Ore Rimanenti</div><div style="font-weight:700;color:var(--primary);">${remaining.toFixed(1)}h</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Tariffa</div><div style="font-weight:700;color:var(--success);">€${p.rate}/h</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;">
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Budget €</div><div style="font-weight:700;color:var(--success);">€${budgetEur.toLocaleString()}</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Costo Attuale €</div><div style="font-weight:700;color:var(--success);">€${budgetUsedEur.toLocaleString()}</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Rimanente €</div><div style="font-weight:700;color:var(--success);">€${remainingEur.toLocaleString()}</div></div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);margin-bottom:3px;">Scadenza</div><div style="font-weight:700;color:var(--primary);">${p.deadline ? new Date(p.deadline).toLocaleDateString('it-IT') : '-'}</div></div>
+      </div>
+      <div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;">
+        <div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width 0.3s ease;width:${Math.min(percent, 100)}%;"></div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray);display:flex;justify-content:space-between;">
+        <span>${percent.toFixed(1)}% ore utilizzato</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateProjectHours() {
+  appState.projects.forEach(p => {
+    p.used = appState.activities.filter(a => a.project === p.name).reduce((sum, a) => sum + a.hoursActual, 0);
+  });
+  renderProjects();
+}
+
+function updateDashboard() {
+  const filteredActivities = getFilteredActivities();
+  const totalActivities = filteredActivities.length;
+  const completedActivities = filteredActivities.filter(a => a.progress >= 100).length;
+  const totalHoursPlan = filteredActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
+  const totalHoursActual = filteredActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+  const totalCost = totalHoursActual * appState.HOURLY_RATE;
+  
+  document.getElementById('stat-activities').textContent = totalActivities;
+  document.getElementById('stat-completed').textContent = completedActivities;
+  document.getElementById('stat-hours').textContent = totalHoursPlan.toFixed(1);
+  document.getElementById('stat-hours-actual').textContent = totalHoursActual.toFixed(1);
+  document.getElementById('stat-cost').textContent = `€${totalCost.toFixed(0)}`;
+  
+  const personHours = {};
+  filteredActivities.forEach(a => {
+    if (!personHours[a.person]) personHours[a.person] = { plan: 0, actual: 0 };
+    personHours[a.person].plan += a.hoursPlan;
+    personHours[a.person].actual += a.hoursActual;
+  });
+  
+  if (appState.charts.hoursByPerson) appState.charts.hoursByPerson.destroy();
+  const ctx1 = document.getElementById('hoursByPersonChart');
+  if (ctx1) {
+    appState.charts.hoursByPerson = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(personHours),
+        datasets: [
+          { label: 'Ore Pianificate', data: Object.values(personHours).map(p => p.plan), backgroundColor: '#1F4E79' },
+          { label: 'Ore Effettive', data: Object.values(personHours).map(p => p.actual), backgroundColor: '#2E86C1' }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+  
+  const statusCount = { 'Da Iniziare': 0, 'In Corso': 0, 'Completato': 0, 'In Attesa': 0 };
+  filteredActivities.forEach(a => {
+    if (statusCount[a.status] !== undefined) statusCount[a.status]++;
+  });
+  
+  if (appState.charts.status) appState.charts.status.destroy();
+  const ctx2 = document.getElementById('statusChart');
+  if (ctx2) {
+    appState.charts.status = new Chart(ctx2, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(statusCount),
+        datasets: [{ data: Object.values(statusCount), backgroundColor: ['#F39C12', '#2E86C1', '#27AE60', '#E74C3C'] }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+  
+  const monthlyData = MONTHS.map((_, i) => {
+    const monthActivities = filteredActivities.filter(a => a.month === i);
+    return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+  });
+  
+  if (appState.charts.monthly) appState.charts.monthly.destroy();
+  const ctx3 = document.getElementById('monthlyChart');
+  if (ctx3) {
+    appState.charts.monthly = new Chart(ctx3, {
+      type: 'line',
+      data: {
+        labels: MONTHS_IT,
+        datasets: [{
+          label: 'Ore Mensili',
+          data: monthlyData,
+          borderColor: '#1F4E79',
+          backgroundColor: 'rgba(31,78,121,0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+  }
+}
+
+function exportToExcel() {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const wsActivities = workbook.addWorksheet('Attività');
+    
+    wsActivities.columns = [
+      { header: 'Data', key: 'date', width: 12 },
+      { header: 'Persona', key: 'person', width: 18 },
+      { header: 'Cliente', key: 'client', width: 18 },
+      { header: 'Progetto', key: 'project', width: 20 },
+      { header: 'Attività', key: 'name', width: 30 },
+      { header: 'Link', key: 'link', width: 25 },
+      { header: 'Ore Pianificate', key: 'hoursPlan', width: 14 },
+      { header: 'Ore Effettive', key: 'hoursActual', width: 14 },
+      { header: 'Differenza', key: 'diff', width: 12 },
+      { header: 'Avanzamento %', key: 'progress', width: 14 },
+      { header: 'Costo €', key: 'cost', width: 12 },
+      { header: 'Stato', key: 'status', width: 14 },
+      { header: 'Note', key: 'notes', width: 25 }
+    ];
+    
+    wsActivities.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E79' } };
+    wsActivities.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    wsActivities.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
+    
+    appState.activities.forEach(a => {
+      const cost = a.hoursActual * appState.HOURLY_RATE;
+      const diff = a.hoursActual - a.hoursPlan;
+      wsActivities.addRow({
+        date: a.date,
+        person: a.person,
+        client: a.client,
+        project: a.project,
+        name: a.name,
+        link: a.link,
+        hoursPlan: a.hoursPlan,
+        hoursActual: a.hoursActual,
+        diff: diff,
+        progress: a.progress,
+        cost: cost,
+        status: a.status,
+        notes: a.notes
+      });
+    });
+    
+    const wsProjects = workbook.addWorksheet('Progetti');
+    wsProjects.columns = [
+      { header: 'Cliente', key: 'client', width: 20 },
+      { header: 'Nome Progetto', key: 'name', width: 25 },
+      { header: 'Responsabile', key: 'person', width: 18 },
+      { header: 'Budget Ore', key: 'budget', width: 14 },
+      { header: 'Ore Utilizzate', key: 'used', width: 16 },
+      { header: 'Ore Rimanenti', key: 'remaining', width: 16 },
+      { header: 'Tariffa €/h', key: 'rate', width: 12 },
+      { header: 'Budget €', key: 'budgetEur', width: 14 },
+      { header: 'Costo Attuale €', key: 'usedEur', width: 16 },
+      { header: 'Rimanente €', key: 'remainingEur', width: 14 },
+      { header: 'Avanzamento %', key: 'percent', width: 14 },
+      { header: 'Scadenza', key: 'deadline', width: 14 },
+      { header: 'Stato', key: 'status', width: 14 }
+    ];
+    
+    wsProjects.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E79' } };
+    wsProjects.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    wsProjects.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
+    
+    appState.projects.forEach(p => {
+      const budget = p.budget || 0;
+      const used = p.used || 0;
+      const rate = p.rate || 35;
+      const remaining = budget - used;
+      const budgetEur = budget * rate;
+      const usedEur = used * rate;
+      const remainingEur = budgetEur - usedEur;
+      const percent = budget > 0 ? (used / budget * 100) : 0;
+      
+      wsProjects.addRow({
+        client: p.client,
+        name: p.name,
+        person: p.person,
+        budget: budget,
+        used: used,
+        remaining: remaining,
+        rate: rate,
+        budgetEur: budgetEur,
+        usedEur: usedEur,
+        remainingEur: remainingEur,
+        percent: percent,
+        deadline: p.deadline,
+        status: p.status
+      });
+    });
+    
+    const wsSummary = workbook.addWorksheet('Riepilogo');
+    const totalActivities = appState.activities.length;
+    const completed = appState.activities.filter(a => a.progress >= 100).length;
+    const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
+    const totalHoursActual = appState.activities.reduce((sum, a) => sum + a.hoursActual, 0);
+    const totalCost = totalHoursActual * appState.HOURLY_RATE;
+    
+    wsSummary.addRow(['RIEPILOGO ATTIVITÀ']);
+    wsSummary.addRow([]);
+    wsSummary.addRow(['Metrica', 'Valore']);
+    wsSummary.addRow(['Attività Totali', totalActivities]);
+    wsSummary.addRow(['Attività Completate', completed]);
+    wsSummary.addRow(['Ore Pianificate', totalHoursPlan]);
+    wsSummary.addRow(['Ore Effettive', totalHoursActual]);
+    wsSummary.addRow(['Costo Totale €', totalCost]);
+    wsSummary.addRow([]);
+    wsSummary.addRow(['RIEPILOGO PER PERSONA']);
+    wsSummary.addRow(['Persona', 'Attività', 'Ore Pianificate', 'Ore Effettive', 'Costo €']);
+    
+    const personSummary = {};
+    appState.activities.forEach(a => {
+      if (!personSummary[a.person]) {
+        personSummary[a.person] = { count: 0, plan: 0, actual: 0 };
+      }
+      personSummary[a.person].count += 1;
+      personSummary[a.person].plan += a.hoursPlan || 0;
+      personSummary[a.person].actual += a.hoursActual || 0;
+    });
+    
+    Object.entries(personSummary).forEach(([person, data]) => {
+      wsSummary.addRow([person, data.count, data.plan, data.actual, data.actual * appState.HOURLY_RATE]);
+    });
+    
+    wsSummary.columns = [{ width: 25 }, { width: 14 }, { width: 16 }, { width: 16 }, { width: 14 }];
+    wsSummary.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E79' } };
+    wsSummary.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 14 };
+    wsSummary.getRow(1).alignment = { horizontal: 'center' };
+    wsSummary.getRow(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E86C1' } };
+    wsSummary.getRow(3).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    wsSummary.getRow(11).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E86C1' } };
+    wsSummary.getRow(11).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    
+    const wsMonths = workbook.addWorksheet('Mesi');
+    wsMonths.columns = [
+      { header: 'Mese', key: 'month', width: 15 },
+      { header: 'Attività', key: 'count', width: 12 },
+      { header: 'Ore Pianificate', key: 'plan', width: 16 },
+      { header: 'Ore Effettive', key: 'actual', width: 16 },
+      { header: 'Costo €', key: 'cost', width: 14 }
+    ];
+    
+    wsMonths.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E79' } };
+    wsMonths.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    wsMonths.getRow(1).alignment = { horizontal: 'center', vertical: 'center' };
+    
+    MONTHS_IT.forEach((month, idx) => {
+      const monthActivities = appState.activities.filter(a => a.month === idx);
+      const count = monthActivities.length;
+      const plan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
+      const actual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+      const cost = actual * appState.HOURLY_RATE;
+      wsMonths.addRow({ month: month, count: count, plan: plan, actual: actual, cost: cost });
+    });
+    
+    workbook.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `registro_attivita_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  } catch (e) {
+    console.error('Errore:', e);
+    alert('Errore durante l\'esportazione Excel. Prova con CSV.');
+    exportToCSV();
+  }
+}
+
+function exportToCSV() {
+  let csv = 'Data,Persona,Cliente,Progetto,Attività,Link,Ore Pianificate,Ore Effettive,Avanzamento,Stato,Costo\n';
+  
+  appState.activities.forEach(a => {
+    const cost = a.hoursActual * appState.HOURLY_RATE;
+    csv += `"${a.date}","${a.person}","${a.client}","${a.project}","${a.name}","${a.link}",${a.hoursPlan},${a.hoursActual},${a.progress}%,"${a.status}",€${cost.toFixed(0)}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `registro_attivita_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.getElementById('edit-project-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeProjectModal();
+});
+</script>
+</body>
+</html>
