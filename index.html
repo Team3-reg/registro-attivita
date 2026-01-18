@@ -534,6 +534,7 @@ function renderProjects() {
       <div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div>
     </div>`;
   }).join('');
+  }
 function editProject(id) {
   const project = appState.projects.find(p => p.id === id);
   if (!project) return;
