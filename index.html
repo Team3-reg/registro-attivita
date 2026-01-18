@@ -327,32 +327,48 @@ async function loadFromOneDrive() {
   }
 }
 
-async function syncWithOneDrive() {
+async function loginWithMicrosoft() {
   try {
-    const data = JSON.stringify({
-      activities: appState.activities,
-      projects: appState.projects,
-      timestamp: new Date().toISOString()
+    const response = await msalInstance.loginPopup({
+      scopes: ["Files.ReadWrite", "offline_access"]
     });
+    accessToken = response.accessToken;
+    userEmail = response.account.username;
     
-    const response = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/Registro-Attività-Team/dati.json:/content', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: data
-    });
-    
-    if (response.ok) {
-      alert('✅ Dati sincronizzati su OneDrive!');
+    // Controlla se è il primo accesso
+    const isFirstAccess = !localStorage.getItem('user_' + userEmail);
+    if (isFirstAccess) {
+      await notifyFirstAccess(userEmail);
+      localStorage.setItem('user_' + userEmail, 'authorized');
     }
+    
+    document.getElementById('user-name').textContent = userEmail;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    await loadFromOneDrive();
+    initializeApp();
   } catch (error) {
-    console.error('Errore sincronizzazione:', error);
-    alert('Errore durante la sincronizzazione');
+    console.error('Errore login:', error);
+    alert('Errore durante il login');
   }
 }
 
+async function notifyFirstAccess(email) {
+  try {
+    const formData = new FormData();
+    formData.append('1688720454', email);
+    
+    await fetch('https://docs.google.com/forms/d/e/1jJzf1yFPozwXmu69TY8JZFBivj-pB_4R548a2CJBO-A/formResponse', {
+      method: 'POST',
+      mode: 'no-cors',
+      body: formData
+    });
+    
+    console.log('✅ Notifica inviata a Saverio');
+  } catch (error) {
+    console.log('Notifica inviata');
+  }
+}
 function logout() {
   msalInstance.logout();
   document.getElementById('login-screen').style.display = 'flex';
