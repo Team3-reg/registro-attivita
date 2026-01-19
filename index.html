@@ -245,7 +245,6 @@ body {
 </div>
 </div>
 
-<!-- MODALI -->
 <div id="edit-project-modal" class="modal">
 <div class="modal-content">
 <h2 style="color:var(--primary);margin-bottom:20px;">✏️ Modifica Progetto</h2>
@@ -310,7 +309,6 @@ body {
 </div>
 
 <script>
-// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBRgRwfWpXqiK_OAuC1o05J6t80wg5lm_4",
   authDomain: "registro-attivita-team.firebaseapp.com",
@@ -320,14 +318,12 @@ const firebaseConfig = {
   appId: "1:1052586267627:web:ede67f562d87048a28ffae"
 };
 
-// Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const auth = firebase.auth();
 
 let currentUser = null;
-
 let appState = {
   activities: [],
   projects: [],
@@ -342,7 +338,6 @@ const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Lugl
 function togglePassword() {
   const passwordInput = document.getElementById('login-password');
   const eyeIcon = document.getElementById('eye-icon');
-  
   if (passwordInput.type === 'password') {
     passwordInput.type = 'text';
     eyeIcon.classList.remove('fa-eye');
@@ -377,7 +372,6 @@ function loginWithFirebase() {
     .catch(error => {
       errorDiv.textContent = 'Email o password errata';
       errorDiv.style.display = 'block';
-      console.error('Errore login:', error);
     });
 }
 
@@ -900,7 +894,6 @@ function exportToExcel() {
   }
 }
 
-// Check if user is already logged in
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
