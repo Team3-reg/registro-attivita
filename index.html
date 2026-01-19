@@ -376,12 +376,27 @@ function loginWithFirebase() {
 }
 
 function loadFromLocalStorage() {
-  const data = localStorage.getItem('appData_' + currentUser.email);
-  if (data) {
-    const parsed = JSON.parse(data);
-    appState.activities = parsed.activities || [];
-    appState.projects = parsed.projects || [];
-  }
+  const db = firebase.database();
+  
+  // Carica da Firebase
+  db.ref('users/' + currentUser.uid + '/data').once('value', snapshot => {
+    if (snapshot.exists()) {
+      const parsed = snapshot.val();
+      appState.activities = parsed.activities || [];
+      appState.projects = parsed.projects || [];
+      renderActivities();
+      renderProjects();
+      updateDashboard();
+    } else {
+      // Se non ci sono dati su Firebase, carica da localStorage
+      const data = localStorage.getItem('appData_' + currentUser.email);
+      if (data) {
+        const parsed = JSON.parse(data);
+        appState.activities = parsed.activities || [];
+        appState.projects = parsed.projects || [];
+      }
+    }
+  });
 }
 
 function syncData() {
@@ -390,8 +405,20 @@ function syncData() {
     projects: appState.projects,
     timestamp: new Date().toISOString()
   };
+  
+  // Salva su localStorage
   localStorage.setItem('appData_' + currentUser.email, JSON.stringify(data));
-  alert('✅ Dati salvati!');
+  
+  // Salva su Firebase
+  const db = firebase.database();
+  db.ref('users/' + currentUser.uid + '/data').set(data)
+    .then(() => {
+      alert('✅ Dati salvati su Firebase!');
+    })
+    .catch(error => {
+      console.error('Errore salvataggio:', error);
+      alert('⚠️ Errore nel salvataggio');
+    });
 }
 
 function logout() {
