@@ -322,8 +322,17 @@ const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio'
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 function loginWithMicrosoft() {
-  msalInstance.loginRedirect({
+  msalInstance.loginPopup({
     scopes: ["Files.ReadWrite", "offline_access"]
+  }).then(response => {
+    accessToken = response.accessToken;
+    userEmail = response.account.username;
+    document.getElementById('user-name').textContent = userEmail;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    loadFromOneDrive().then(() => initializeApp());
+  }).catch(error => {
+    console.error('Errore login:', error);
   });
 }
 
