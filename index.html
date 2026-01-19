@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -111,11 +113,13 @@ body {
 <div id="login-screen" class="login-screen">
 <div class="login-box">
 <h1><i class="fas fa-tasks"></i> Registro Attività</h1>
-<p style="color: var(--gray); margin-bottom: 30px;">Accedi con il tuo account Microsoft</p>
+<p style="color: var(--gray); margin-bottom: 30px;">Accedi al tuo account</p>
 <input type="email" id="login-email" placeholder="Email" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:6px;margin-bottom:15px;font-size:14px;">
-<button class="btn btn-secondary" onclick="loginWithMicrosoft()" style="width: 100%; padding: 15px; font-size: 16px;">
+<input type="password" id="login-password" placeholder="Password" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:6px;margin-bottom:15px;font-size:14px;">
+<button class="btn btn-secondary" onclick="loginWithFirebase()" style="width: 100%; padding: 15px; font-size: 16px;">
 <i class="fas fa-sign-in-alt"></i> Accedi
 </button>
+<p id="login-error" style="color: var(--danger); margin-top: 15px; display: none;"></p>
 </div>
 </div>
 
@@ -125,7 +129,7 @@ body {
 <div><h1><i class="fas fa-tasks"></i> Registro Attività Team</h1></div>
 <div class="header-right">
 <div class="user-info"><i class="fas fa-user-circle"></i><span id="user-name">Utente</span></div>
-<button class="btn btn-secondary" onclick="syncWithOneDrive()"><i class="fas fa-cloud-upload-alt"></i> Sincronizza</button>
+<button class="btn btn-secondary" onclick="syncData()"><i class="fas fa-cloud-upload-alt"></i> Sincronizza</button>
 <button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
 <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Esci</button>
 </div>
@@ -297,7 +301,21 @@ body {
 </div>
 
 <script>
-let userEmail = null;
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBRgRwfWpXqiK_OAuC1o05J6t80wg5lm_4",
+  authDomain: "registro-attivita-team.firebaseapp.com",
+  projectId: "registro-attivita-team",
+  storageBucket: "registro-attivita-team.firebasestorage.app",
+  messagingSenderId: "1052586267627",
+  appId: "1:1052586267627:web:ede67f562d87048a28ffae"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+let currentUser = null;
 
 let appState = {
   activities: [],
@@ -310,25 +328,35 @@ let appState = {
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-function loginWithMicrosoft() {
+function loginWithFirebase() {
   const email = document.getElementById('login-email').value;
-  if (!email) {
-    alert('Inserisci la tua email');
+  const password = document.getElementById('login-password').value;
+  const errorDiv = document.getElementById('login-error');
+  
+  if (!email || !password) {
+    errorDiv.textContent = 'Inserisci email e password';
+    errorDiv.style.display = 'block';
     return;
   }
   
-  userEmail = email;
-  localStorage.setItem('userEmail', email);
-  document.getElementById('user-name').textContent = email;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
-  
-  loadFromLocalStorage();
-  initializeApp();
+  auth.signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      currentUser = userCredential.user;
+      document.getElementById('user-name').textContent = email;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      loadFromLocalStorage();
+      initializeApp();
+    })
+    .catch(error => {
+      errorDiv.textContent = 'Email o password errata';
+      errorDiv.style.display = 'block';
+      console.error('Errore login:', error);
+    });
 }
 
 function loadFromLocalStorage() {
-  const data = localStorage.getItem('appData_' + userEmail);
+  const data = localStorage.getItem('appData_' + currentUser.email);
   if (data) {
     const parsed = JSON.parse(data);
     appState.activities = parsed.activities || [];
@@ -336,20 +364,25 @@ function loadFromLocalStorage() {
   }
 }
 
-function syncWithOneDrive() {
+function syncData() {
   const data = {
     activities: appState.activities,
     projects: appState.projects,
     timestamp: new Date().toISOString()
   };
-  localStorage.setItem('appData_' + userEmail, JSON.stringify(data));
+  localStorage.setItem('appData_' + currentUser.email, JSON.stringify(data));
   alert('✅ Dati salvati!');
 }
 
 function logout() {
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('appData_' + userEmail);
-  window.location.reload();
+  auth.signOut().then(() => {
+    currentUser = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+  });
 }
 
 function initializeApp() {
@@ -365,7 +398,7 @@ function initializeApp() {
   document.getElementById('edit-activity-progress').addEventListener('input', function() {
     document.getElementById('edit-progress-value').textContent = this.value + '%';
   });
-  setInterval(() => syncWithOneDrive(), 30000);
+  setInterval(() => syncData(), 30000);
 }
 
 function populateYearFilter() {
@@ -433,7 +466,7 @@ function addProject() {
   document.getElementById('project-person').value = '';
   document.getElementById('project-budget').value = '';
   document.getElementById('project-deadline').value = '';
-  syncWithOneDrive();
+  syncData();
 }
 
 function updateProjectDropdown() {
@@ -469,7 +502,7 @@ function addActivity() {
   }
   
   appState.activities.push(data);
-  syncWithOneDrive();
+  syncData();
   renderActivities();
   updateDashboard();
   
@@ -537,7 +570,7 @@ function deleteActivity(id) {
 function confirmDeleteActivity() {
   if (activityToDelete !== null) {
     appState.activities = appState.activities.filter(a => a.id !== activityToDelete);
-    syncWithOneDrive();
+    syncData();
     renderActivities();
     updateDashboard();
     document.getElementById('confirm-delete-activity-modal').classList.remove('active');
@@ -594,7 +627,7 @@ function saveActivityEdit() {
   activity.status = document.getElementById('edit-activity-status').value;
   activity.notes = document.getElementById('edit-activity-notes').value;
   
-  syncWithOneDrive();
+  syncData();
   closeEditActivityModal();
   renderActivities();
   updateDashboard();
@@ -670,7 +703,7 @@ function saveProjectEdit() {
   project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
   project.deadline = document.getElementById('edit-project-deadline').value;
   
-  syncWithOneDrive();
+  syncData();
   closeProjectModal();
   updateProjectDropdown();
   renderProjects();
@@ -688,7 +721,7 @@ function deleteProject(id) {
 function confirmDeleteProject() {
   if (projectToDelete !== null) {
     appState.projects = appState.projects.filter(p => p.id !== projectToDelete);
-    syncWithOneDrive();
+    syncData();
     updateProjectDropdown();
     renderProjects();
     document.getElementById('confirm-delete-project-modal').classList.remove('active');
@@ -842,11 +875,10 @@ function exportToExcel() {
 }
 
 // Check if user is already logged in
-window.addEventListener('load', function() {
-  const savedEmail = localStorage.getItem('userEmail');
-  if (savedEmail) {
-    userEmail = savedEmail;
-    document.getElementById('user-name').textContent = userEmail;
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('user-name').textContent = user.email;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
     loadFromLocalStorage();
