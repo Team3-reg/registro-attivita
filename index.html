@@ -310,10 +310,11 @@ const firebaseConfig = {
   messagingSenderId: "1052586267627",
   appId: "1:1052586267627:web:ede67f562d87048a28ffae"
 };
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-compat.js"></script>
+  
 // Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
 let currentUser = null;
 
