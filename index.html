@@ -321,51 +321,10 @@ let appState = {
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-  msalInstance.handleRedirectPromise().then(() => {
-  const account = msalInstance.getActiveAccount();
-  if (account) {
-    userEmail = account.username;
-    document.getElementById('user-name').textContent = userEmail;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    msalInstance.acquireTokenSilent({
-      scopes: ["Files.ReadWrite"],
-      account: account
-    }).then(response => {
-      accessToken = response.accessToken;
-      loadFromOneDrive().then(() => initializeApp());
-    });
-  }
-}).catch(error => {
-  console.error('Errore:', error);
-});
-  
-async function loginWithMicrosoft() {
-  try {
-    await msalInstance.loginRedirect({
-      scopes: ["Files.ReadWrite", "offline_access"]
-    });
-  } catch (error) {
-    console.error('Errore login:', error);
-    alert('Errore durante il login');
-  }
-}
-    
-    const isFirstAccess = !localStorage.getItem('user_' + userEmail);
-    if (isFirstAccess) {
-      await notifyFirstAccess(userEmail);
-      localStorage.setItem('user_' + userEmail, 'authorized');
-    }
-    
-    document.getElementById('user-name').textContent = userEmail;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    await loadFromOneDrive();
-    initializeApp();
-  } catch (error) {
-    console.error('Errore login:', error);
-    alert('Errore durante il login');
-  }
+function loginWithMicrosoft() {
+  msalInstance.loginRedirect({
+    scopes: ["Files.ReadWrite", "offline_access"]
+  });
 }
 
 async function loadFromOneDrive() {
