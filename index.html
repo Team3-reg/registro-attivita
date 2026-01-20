@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -298,14 +299,13 @@ body {
 </div>
 
 <script>
-// OAuth2 Configuration
-const CLIENT_ID = 'd6de48db-4d5b-40f0-9ef7-0b4b4cc345cb';
-const TENANT_ID = 'c22fe06f-fec5-436d-a94d-614e59ee50c6';
-const REDIRECT_URI = window.location.origin + window.location.pathname;
-const SCOPES = 'user.read';
+// Supabase Configuration
+const SUPABASE_URL = 'https://ggqmjgqrtauxxhfigjny.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_peMxXHdOqefko6yNPaxIWw_EuzsO-X4';
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
-let accessToken = null;
 let appState = {
   activities: [],
   projects: [],
@@ -317,63 +317,38 @@ let appState = {
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-function loginWithOneDrive() {
-  const authUrl = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize?` +
-    `client_id=${CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&response_type=code` +
-    `&scope=${encodeURIComponent(SCOPES)}` +
-    `&response_mode=query`;
-  
-  window.location.href = authUrl;
+async function loginWithOneDrive() {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'microsoft',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname
+      }
+    });
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error('Errore:', error);
+    document.getElementById('login-error').textContent = 'Errore durante il login';
+    document.getElementById('login-error').style.display = 'block';
+  }
 }
 
-async function handleAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
   
-  if (code) {
-    try {
-      const tokenResponse = await fetch(`https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: CLIENT_ID,
-          code: code,
-          redirect_uri: REDIRECT_URI,
-          grant_type: 'authorization_code',
-          scope: SCOPES
-        })
-      });
-      
-      const tokenData = await tokenResponse.json();
-      accessToken = tokenData.access_token;
-      
-      const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      
-      const userData = await userResponse.json();
-      currentUser = userData;
-      
-      document.getElementById('user-name').textContent = userData.userPrincipalName;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-screen').style.display = 'block';
-      
-      loadFromLocalStorage();
-      initializeApp();
-      
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } catch (error) {
-      console.error('Errore:', error);
-      document.getElementById('login-error').textContent = 'Errore durante il login';
-      document.getElementById('login-error').style.display = 'block';
-    }
+  if (session) {
+    currentUser = session.user;
+    document.getElementById('user-name').textContent = currentUser.email;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    loadFromLocalStorage();
+    initializeApp();
   }
 }
 
 function loadFromLocalStorage() {
-  const data = localStorage.getItem('appData_' + currentUser.userPrincipalName);
+  const data = localStorage.getItem('appData_' + currentUser.email);
   if (data) {
     try {
       const parsed = JSON.parse(data);
@@ -390,7 +365,7 @@ function exportData() {
     activities: appState.activities,
     projects: appState.projects,
     timestamp: new Date().toISOString(),
-    exportedBy: currentUser.userPrincipalName
+    exportedBy: currentUser.email
   };
   
   const now = new Date();
@@ -436,9 +411,9 @@ function importData(event) {
   document.getElementById('import-file').value = '';
 }
 
-function logout() {
+async function logout() {
+  await supabase.auth.signOut();
   currentUser = null;
-  accessToken = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
 }
@@ -925,8 +900,20 @@ function exportToExcel() {
   }
 }
 
-// Gestisci il callback OAuth
-window.addEventListener('load', handleAuthCallback);
+// Controlla l'autenticazione al caricamento
+window.addEventListener('load', checkAuth);
+
+// Ascolta i cambiamenti di autenticazione
+supabase.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    currentUser = session.user;
+    document.getElementById('user-name').textContent = currentUser.email;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    loadFromLocalStorage();
+    initializeApp();
+  }
+});
 </script>
 </body>
 </html>
