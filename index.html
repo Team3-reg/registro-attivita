@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -139,7 +138,9 @@ body {
 <div><h1><i class="fas fa-tasks"></i> Registro Attività Team</h1></div>
 <div class="header-right">
 <div class="user-info"><i class="fas fa-user-circle"></i><span id="user-name">Utente</span></div>
-<button class="btn btn-secondary" onclick="syncData()"><i class="fas fa-cloud-upload-alt"></i> Sincronizza</button>
+<button class="btn btn-secondary" onclick="exportData()"><i class="fas fa-download"></i> Esporta</button>
+<button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Importa</button>
+<input type="file" id="import-file" accept=".reg" style="display:none;" onchange="importData(event)">
 <button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
 <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Esci</button>
 </div>
@@ -377,49 +378,67 @@ function loginWithFirebase() {
 }
 
 function loadFromLocalStorage() {
-  const db = firebase.database();
-  
-  // Carica da Firebase
-  db.ref('users/' + currentUser.uid + '/data').once('value', snapshot => {
-    if (snapshot.exists()) {
-      const parsed = snapshot.val();
+  const data = localStorage.getItem('appData_' + currentUser.email);
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
       appState.activities = parsed.activities || [];
       appState.projects = parsed.projects || [];
-      renderActivities();
-      renderProjects();
-      updateDashboard();
-    } else {
-      // Se non ci sono dati su Firebase, carica da localStorage
-      const data = localStorage.getItem('appData_' + currentUser.email);
-      if (data) {
-        const parsed = JSON.parse(data);
-        appState.activities = parsed.activities || [];
-        appState.projects = parsed.projects || [];
-      }
+    } catch (e) {
+      console.log('Nessun dato salvato localmente');
     }
-  });
+  }
 }
 
-function syncData() {
+function exportData() {
   const data = {
     activities: appState.activities,
     projects: appState.projects,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    exportedBy: currentUser.email
   };
   
-  // Salva su localStorage
-  localStorage.setItem('appData_' + currentUser.email, JSON.stringify(data));
+  const now = new Date();
+  const filename = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}.reg`;
   
-  // Salva su Firebase
-  const db = firebase.database();
-  db.ref('users/' + currentUser.uid + '/data').set(data)
-    .then(() => {
-      alert('✅ Dati salvati su Firebase!');
-    })
-    .catch(error => {
-      console.error('Errore salvataggio:', error);
-      alert('⚠️ Errore nel salvataggio');
-    });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('✅ Dati esportati: ' + filename);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      appState.activities = data.activities || [];
+      appState.projects = data.projects || [];
+      
+      renderActivities();
+      renderProjects();
+      updateDashboard();
+      updateProjectDropdown();
+      
+      alert('✅ Dati importati da: ' + file.name);
+    } catch (error) {
+      alert('❌ Errore: file non valido');
+      console.error(error);
+    }
+  };
+  reader.readAsText(file);
+  
+  document.getElementById('import-file').value = '';
 }
 
 function logout() {
@@ -446,7 +465,6 @@ function initializeApp() {
   document.getElementById('edit-activity-progress').addEventListener('input', function() {
     document.getElementById('edit-progress-value').textContent = this.value + '%';
   });
-  setInterval(() => syncData(), 30000);
 }
 
 function populateYearFilter() {
@@ -514,7 +532,6 @@ function addProject() {
   document.getElementById('project-person').value = '';
   document.getElementById('project-budget').value = '';
   document.getElementById('project-deadline').value = '';
-  syncData();
 }
 
 function updateProjectDropdown() {
@@ -550,7 +567,6 @@ function addActivity() {
   }
   
   appState.activities.push(data);
-  syncData();
   renderActivities();
   updateDashboard();
   
@@ -618,7 +634,6 @@ function deleteActivity(id) {
 function confirmDeleteActivity() {
   if (activityToDelete !== null) {
     appState.activities = appState.activities.filter(a => a.id !== activityToDelete);
-    syncData();
     renderActivities();
     updateDashboard();
     document.getElementById('confirm-delete-activity-modal').classList.remove('active');
@@ -675,7 +690,6 @@ function saveActivityEdit() {
   activity.status = document.getElementById('edit-activity-status').value;
   activity.notes = document.getElementById('edit-activity-notes').value;
   
-  syncData();
   closeEditActivityModal();
   renderActivities();
   updateDashboard();
@@ -751,7 +765,6 @@ function saveProjectEdit() {
   project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
   project.deadline = document.getElementById('edit-project-deadline').value;
   
-  syncData();
   closeProjectModal();
   updateProjectDropdown();
   renderProjects();
@@ -769,7 +782,6 @@ function deleteProject(id) {
 function confirmDeleteProject() {
   if (projectToDelete !== null) {
     appState.projects = appState.projects.filter(p => p.id !== projectToDelete);
-    syncData();
     updateProjectDropdown();
     renderProjects();
     document.getElementById('confirm-delete-project-modal').classList.remove('active');
