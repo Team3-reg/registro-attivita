@@ -163,9 +163,10 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 
 <script>
 let currentUser = null;
-let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35, charts: {} };
+let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35 };
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+let charts = {};
 
 function login() {
   const email = document.getElementById('login-email').value.trim();
@@ -196,7 +197,8 @@ function loadData() {
       const parsed = JSON.parse(data);
       appState.activities = parsed.activities || [];
       appState.projects = parsed.projects || [];
-    } catch (e) {}
+      appState.currentMonth = parsed.currentMonth || 0;
+    } catch (e) { console.error(e); }
   }
 }
 
@@ -238,18 +240,26 @@ function switchTab(tab, element) {
 }
 
 function addProject() {
-  const data = {
+  const client = document.getElementById('project-client').value.trim();
+  const name = document.getElementById('project-name').value.trim();
+  const person = document.getElementById('project-person').value;
+  
+  if (!client || !name || !person) { 
+    alert('Compila cliente, nome progetto e responsabile'); 
+    return; 
+  }
+  
+  appState.projects.push({
     id: Date.now(),
-    client: document.getElementById('project-client').value,
-    name: document.getElementById('project-name').value,
-    person: document.getElementById('project-person').value,
+    client: client,
+    name: name,
+    person: person,
     budget: parseFloat(document.getElementById('project-budget').value) || 0,
     rate: parseFloat(document.getElementById('project-rate').value) || 35,
     deadline: document.getElementById('project-deadline').value,
     used: 0
-  };
-  if (!data.client || !data.name || !data.person) { alert('Compila cliente, nome progetto e responsabile'); return; }
-  appState.projects.push(data);
+  });
+  
   saveData();
   updateProjectDropdown();
   renderProjects();
@@ -266,24 +276,32 @@ function updateProjectDropdown() {
 }
 
 function addActivity() {
+  const person = document.getElementById('activity-person').value;
+  const name = document.getElementById('activity-name').value.trim();
+  
+  if (!person || !name) { 
+    alert('Compila almeno Persona e Attività'); 
+    return; 
+  }
+  
   const projectName = document.getElementById('activity-project').value;
   const project = appState.projects.find(p => p.name === projectName);
-  const data = {
+  
+  appState.activities.push({
     id: Date.now(),
     month: appState.currentMonth,
     date: document.getElementById('activity-date').value || new Date().toISOString().split('T')[0],
-    person: document.getElementById('activity-person').value,
+    person: person,
     project: projectName || 'Senza progetto',
     client: project ? project.client : '',
-    name: document.getElementById('activity-name').value,
+    name: name,
     hoursPlan: parseFloat(document.getElementById('activity-hours-plan').value) || 0,
     hoursActual: parseFloat(document.getElementById('activity-hours-actual').value) || 0,
     progress: parseInt(document.getElementById('activity-progress').value) || 0,
     status: document.getElementById('activity-status').value,
     notes: document.getElementById('activity-notes').value || ''
-  };
-  if (!data.person || !data.name) { alert('Compila almeno Persona e Attività'); return; }
-  appState.activities.push(data);
+  });
+  
   saveData();
   renderActivities();
   updateDashboard();
@@ -307,15 +325,18 @@ function renderActivities() {
   document.getElementById('current-month').textContent = MONTHS_IT[appState.currentMonth];
   const monthActivities = appState.activities.filter(a => a.month === appState.currentMonth);
   const tbody = document.getElementById('activities-table');
+  
   if (monthActivities.length === 0) {
     tbody.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--gray);">Nessuna attività</td></tr>';
   } else {
     tbody.innerHTML = monthActivities.map(a => `<tr><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td></tr>`).join('');
   }
+  
   const total = monthActivities.length;
   const hoursPlan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
   const hoursActual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
   const cost = hoursActual * appState.HOURLY_RATE;
+  
   document.getElementById('month-total').textContent = total;
   document.getElementById('month-hours-plan').textContent = hoursPlan.toFixed(1);
   document.getElementById('month-hours-actual').textContent = hoursActual.toFixed(1);
@@ -336,6 +357,7 @@ function renderProjects() {
     container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray);width:100%;"><i class="fas fa-folder-open" style="font-size:64px;margin-bottom:20px;opacity:0.5;"></i><p>Nessun progetto</p></div>';
     return;
   }
+  
   container.innerHTML = appState.projects.map(p => {
     const percent = p.budget > 0 ? (p.used / p.budget * 100) : 0;
     const remaining = p.budget - p.used;
@@ -363,21 +385,24 @@ function updateDashboard() {
   const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
   const totalHoursActual = appState.activities.reduce((sum, a) => sum + a.hoursActual, 0);
   const totalCost = totalHoursActual * appState.HOURLY_RATE;
+  
   document.getElementById('stat-activities').textContent = totalActivities;
   document.getElementById('stat-completed').textContent = completedActivities;
   document.getElementById('stat-hours').textContent = totalHoursPlan.toFixed(1);
   document.getElementById('stat-hours-actual').textContent = totalHoursActual.toFixed(1);
   document.getElementById('stat-cost').textContent = `€${totalCost.toFixed(0)}`;
+  
   const personHours = {};
   appState.activities.forEach(a => {
     if (!personHours[a.person]) personHours[a.person] = { plan: 0, actual: 0 };
     personHours[a.person].plan += a.hoursPlan;
     personHours[a.person].actual += a.hoursActual;
   });
-  if (appState.charts.hoursByPerson) appState.charts.hoursByPerson.destroy();
+  
+  if (charts.hoursByPerson) charts.hoursByPerson.destroy();
   const ctx1 = document.getElementById('hoursByPersonChart');
   if (ctx1) {
-    appState.charts.hoursByPerson = new Chart(ctx1, {
+    charts.hoursByPerson = new Chart(ctx1, {
       type: 'bar',
       data: {
         labels: Object.keys(personHours),
@@ -389,14 +414,16 @@ function updateDashboard() {
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
+  
   const statusCount = { 'Da Iniziare': 0, 'In Corso': 0, 'Completato': 0, 'In Attesa': 0 };
   appState.activities.forEach(a => {
     if (statusCount[a.status] !== undefined) statusCount[a.status]++;
   });
-  if (appState.charts.status) appState.charts.status.destroy();
+  
+  if (charts.status) charts.status.destroy();
   const ctx2 = document.getElementById('statusChart');
   if (ctx2) {
-    appState.charts.status = new Chart(ctx2, {
+    charts.status = new Chart(ctx2, {
       type: 'pie',
       data: {
         labels: Object.keys(statusCount),
@@ -405,14 +432,16 @@ function updateDashboard() {
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
+  
   const monthlyData = MONTHS.map((_, i) => {
     const monthActivities = appState.activities.filter(a => a.month === i);
     return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
   });
-  if (appState.charts.monthly) appState.charts.monthly.destroy();
+  
+  if (charts.monthly) charts.monthly.destroy();
   const ctx3 = document.getElementById('monthlyChart');
   if (ctx3) {
-    appState.charts.monthly = new Chart(ctx3, {
+    charts.monthly = new Chart(ctx3, {
       type: 'line',
       data: {
         labels: MONTHS_IT,
