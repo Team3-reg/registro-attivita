@@ -7,8 +7,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { --primary: #1F4E79; --secondary: #2E86C1; --success: #27AE60; --danger: #E74C3C; --light: #F8F9FA; --gray: #6C757D; --border: #DEE2E6; }
@@ -161,7 +159,10 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getAuth, signInWithPopup, OAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBrjslNq0ENztbSmYcSKrVv0_aehzo27xg",
   authDomain: "registro-attivita-1ecab.firebaseapp.com",
@@ -171,8 +172,8 @@ const firebaseConfig = {
   appId: "1:754694968919:web:d6ee283c8d3380c5043512"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35, charts: {} };
@@ -180,15 +181,15 @@ const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio'
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 document.getElementById('login-btn').addEventListener('click', function() {
-  const provider = new firebase.auth.OAuthProvider('microsoft.com');
+  const provider = new OAuthProvider('microsoft.com');
   provider.setCustomParameters({ tenant: 'common' });
-  auth.signInWithPopup(provider).catch(error => {
+  signInWithPopup(auth, provider).catch(error => {
     document.getElementById('login-error').textContent = 'Errore: ' + error.message;
     document.getElementById('login-error').style.display = 'block';
   });
 });
 
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, user => {
   if (user) {
     currentUser = user;
     document.getElementById('user-name').textContent = user.email;
@@ -202,11 +203,11 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-function logout() {
-  auth.signOut();
-}
+window.logout = function() {
+  signOut(auth);
+};
 
-function loadData() {
+window.loadData = function() {
   const data = localStorage.getItem('appData_' + currentUser.uid);
   if (data) {
     try {
@@ -215,13 +216,13 @@ function loadData() {
       appState.projects = parsed.projects || [];
     } catch (e) {}
   }
-}
+};
 
-function saveData() {
+window.saveData = function() {
   localStorage.setItem('appData_' + currentUser.uid, JSON.stringify(appState));
-}
+};
 
-function initializeApp() {
+window.initializeApp = function() {
   document.getElementById('activity-date').valueAsDate = new Date();
   updateProjectDropdown();
   renderProjects();
@@ -230,9 +231,9 @@ function initializeApp() {
   document.getElementById('activity-progress').addEventListener('input', function() {
     document.getElementById('progress-value').textContent = this.value + '%';
   });
-}
+};
 
-function switchTab(tab, element) {
+window.switchTab = function(tab, element) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   element.classList.add('active');
   document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
@@ -247,9 +248,9 @@ function switchTab(tab, element) {
     appState.currentMonth = MONTHS.indexOf(tab);
     renderActivities();
   }
-}
+};
 
-function addProject() {
+window.addProject = function() {
   const data = {
     id: Date.now(),
     client: document.getElementById('project-client').value,
@@ -275,15 +276,15 @@ function addProject() {
   document.getElementById('project-person').value = '';
   document.getElementById('project-budget').value = '';
   document.getElementById('project-deadline').value = '';
-}
+};
 
-function updateProjectDropdown() {
+window.updateProjectDropdown = function() {
   const select = document.getElementById('activity-project');
   select.innerHTML = '<option value="">Seleziona...</option>' + 
     appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
-}
+};
 
-function addActivity() {
+window.addActivity = function() {
   const projectName = document.getElementById('activity-project').value;
   const project = appState.projects.find(p => p.name === projectName);
   
@@ -319,16 +320,16 @@ function addActivity() {
   document.getElementById('progress-value').textContent = '0%';
   document.getElementById('activity-notes').value = '';
   document.getElementById('activity-project').value = '';
-}
+};
 
-function changeMonth(delta) {
+window.changeMonth = function(delta) {
   appState.currentMonth += delta;
   if (appState.currentMonth > 11) appState.currentMonth = 0;
   if (appState.currentMonth < 0) appState.currentMonth = 11;
   renderActivities();
-}
+};
 
-function renderActivities() {
+window.renderActivities = function() {
   document.getElementById('current-month').textContent = MONTHS_IT[appState.currentMonth];
   const monthActivities = appState.activities.filter(a => a.month === appState.currentMonth);
   const tbody = document.getElementById('activities-table');
@@ -363,16 +364,16 @@ function renderActivities() {
   document.getElementById('month-cost').textContent = `€${cost.toFixed(0)}`;
   
   updateProjectHours();
-}
+};
 
-function deleteActivity(id) {
+window.deleteActivity = function(id) {
   appState.activities = appState.activities.filter(a => a.id !== id);
   saveData();
   renderActivities();
   updateDashboard();
-}
+};
 
-function renderProjects() {
+window.renderProjects = function() {
   const container = document.getElementById('projects-list');
   if (appState.projects.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray);width:100%;"><i class="fas fa-folder-open" style="font-size:64px;margin-bottom:20px;opacity:0.5;"></i><p>Nessun progetto</p></div>';
@@ -404,23 +405,23 @@ function renderProjects() {
       <div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div>
     </div>`;
   }).join('');
-}
+};
 
-function deleteProject(id) {
+window.deleteProject = function(id) {
   appState.projects = appState.projects.filter(p => p.id !== id);
   saveData();
   updateProjectDropdown();
   renderProjects();
-}
+};
 
-function updateProjectHours() {
+window.updateProjectHours = function() {
   appState.projects.forEach(p => {
     p.used = appState.activities.filter(a => a.project === p.name).reduce((sum, a) => sum + a.hoursActual, 0);
   });
   renderProjects();
-}
+};
 
-function updateDashboard() {
+window.updateDashboard = function() {
   const totalActivities = appState.activities.length;
   const completedActivities = appState.activities.filter(a => a.progress >= 100).length;
   const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
@@ -498,9 +499,9 @@ function updateDashboard() {
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
   }
-}
+};
 
-function exportToExcel() {
+window.exportToExcel = function() {
   try {
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet('Attività');
@@ -549,9 +550,9 @@ function exportToExcel() {
   } catch (e) {
     alert('Errore durante l\'esportazione');
   }
-}
+};
 
-function exportData() {
+window.exportData = function() {
   const data = {
     activities: appState.activities,
     projects: appState.projects,
@@ -572,9 +573,9 @@ function exportData() {
   URL.revokeObjectURL(url);
   
   alert('✅ Dati esportati: ' + filename);
-}
+};
 
-function importData(event) {
+window.importData = function(event) {
   const file = event.target.files[0];
   if (!file) return;
   
@@ -599,7 +600,7 @@ function importData(event) {
   reader.readAsText(file);
   
   document.getElementById('import-file').value = '';
-}
+};
 </script>
 </body>
 </html>
