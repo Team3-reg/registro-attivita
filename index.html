@@ -201,7 +201,13 @@ function loadData() {
 }
 
 function saveData() { 
-  localStorage.setItem('appData_' + currentUser, JSON.stringify(appState)); 
+  const dataToSave = {
+    activities: appState.activities,
+    projects: appState.projects,
+    currentMonth: appState.currentMonth,
+    HOURLY_RATE: appState.HOURLY_RATE
+  };
+  localStorage.setItem('appData_' + currentUser, JSON.stringify(dataToSave)); 
 }
 
 function initializeAppUI() {
