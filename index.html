@@ -7,12 +7,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { --primary: #1F4E79; --secondary: #2E86C1; --success: #27AE60; --danger: #E74C3C; --light: #F8F9FA; --gray: #6C757D; --border: #DEE2E6; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
 .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
-.header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center; }
+.header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
 .header h1 { font-size: 28px; font-weight: 700; }
 .header-right { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
 .user-info { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 8px; }
@@ -64,7 +66,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 <div class="user-info"><i class="fas fa-user-circle"></i><span id="user-name">Utente</span></div>
 <button class="btn btn-secondary" onclick="exportData()"><i class="fas fa-download"></i> Esporta</button>
 <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Importa</button>
-<input type="file" id="import-file" accept=".reg" style="display:none;" onchange="importData(event)">
+<input type="file" id="import-file" accept=".reg,.json" style="display:none;" onchange="importData(event)">
 <button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
 <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Esci</button>
 </div>
@@ -159,10 +161,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 </div>
 </div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { getAuth, signInWithPopup, OAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
-
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBrjslNq0ENztbSmYcSKrVv0_aehzo27xg",
   authDomain: "registro-attivita-1ecab.firebaseapp.com",
@@ -172,8 +171,8 @@ const firebaseConfig = {
   appId: "1:754694968919:web:d6ee283c8d3380c5043512"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35, charts: {} };
@@ -181,33 +180,31 @@ const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio'
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 document.getElementById('login-btn').addEventListener('click', function() {
-  const provider = new OAuthProvider('microsoft.com');
+  const provider = new firebase.auth.OAuthProvider('microsoft.com');
   provider.setCustomParameters({ tenant: 'common' });
-  signInWithPopup(auth, provider).catch(error => {
+  auth.signInWithPopup(provider).catch(error => {
     document.getElementById('login-error').textContent = 'Errore: ' + error.message;
     document.getElementById('login-error').style.display = 'block';
   });
 });
 
-onAuthStateChanged(auth, user => {
+auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
     document.getElementById('user-name').textContent = user.email;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
     loadData();
-    initializeApp();
+    initializeAppUI();
   } else {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-screen').style.display = 'none';
   }
 });
 
-window.logout = function() {
-  signOut(auth);
-};
+function logout() { auth.signOut(); }
 
-window.loadData = function() {
+function loadData() {
   const data = localStorage.getItem('appData_' + currentUser.uid);
   if (data) {
     try {
@@ -216,13 +213,13 @@ window.loadData = function() {
       appState.projects = parsed.projects || [];
     } catch (e) {}
   }
-};
+}
 
-window.saveData = function() {
-  localStorage.setItem('appData_' + currentUser.uid, JSON.stringify(appState));
-};
+function saveData() { 
+  localStorage.setItem('appData_' + currentUser.uid, JSON.stringify(appState)); 
+}
 
-window.initializeApp = function() {
+function initializeAppUI() {
   document.getElementById('activity-date').valueAsDate = new Date();
   updateProjectDropdown();
   renderProjects();
@@ -231,13 +228,12 @@ window.initializeApp = function() {
   document.getElementById('activity-progress').addEventListener('input', function() {
     document.getElementById('progress-value').textContent = this.value + '%';
   });
-};
+}
 
-window.switchTab = function(tab, element) {
+function switchTab(tab, element) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   element.classList.add('active');
   document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
-  
   if (tab === 'dashboard') {
     document.getElementById('dashboard').classList.add('active');
     updateDashboard();
@@ -248,9 +244,9 @@ window.switchTab = function(tab, element) {
     appState.currentMonth = MONTHS.indexOf(tab);
     renderActivities();
   }
-};
+}
 
-window.addProject = function() {
+function addProject() {
   const data = {
     id: Date.now(),
     client: document.getElementById('project-client').value,
@@ -261,12 +257,7 @@ window.addProject = function() {
     deadline: document.getElementById('project-deadline').value,
     used: 0
   };
-  
-  if (!data.client || !data.name || !data.person) {
-    alert('Compila cliente, nome progetto e responsabile');
-    return;
-  }
-  
+  if (!data.client || !data.name || !data.person) { alert('Compila cliente, nome progetto e responsabile'); return; }
   appState.projects.push(data);
   saveData();
   updateProjectDropdown();
@@ -276,18 +267,16 @@ window.addProject = function() {
   document.getElementById('project-person').value = '';
   document.getElementById('project-budget').value = '';
   document.getElementById('project-deadline').value = '';
-};
+}
 
-window.updateProjectDropdown = function() {
+function updateProjectDropdown() {
   const select = document.getElementById('activity-project');
-  select.innerHTML = '<option value="">Seleziona...</option>' + 
-    appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
-};
+  select.innerHTML = '<option value="">Seleziona...</option>' + appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
+}
 
-window.addActivity = function() {
+function addActivity() {
   const projectName = document.getElementById('activity-project').value;
   const project = appState.projects.find(p => p.name === projectName);
-  
   const data = {
     id: Date.now(),
     month: appState.currentMonth,
@@ -302,17 +291,11 @@ window.addActivity = function() {
     status: document.getElementById('activity-status').value,
     notes: document.getElementById('activity-notes').value || ''
   };
-  
-  if (!data.person || !data.name) {
-    alert('Compila almeno Persona e Attività');
-    return;
-  }
-  
+  if (!data.person || !data.name) { alert('Compila almeno Persona e Attività'); return; }
   appState.activities.push(data);
   saveData();
   renderActivities();
   updateDashboard();
-  
   document.getElementById('activity-name').value = '';
   document.getElementById('activity-hours-plan').value = '';
   document.getElementById('activity-hours-actual').value = '';
@@ -320,127 +303,86 @@ window.addActivity = function() {
   document.getElementById('progress-value').textContent = '0%';
   document.getElementById('activity-notes').value = '';
   document.getElementById('activity-project').value = '';
-};
+}
 
-window.changeMonth = function(delta) {
+function changeMonth(delta) {
   appState.currentMonth += delta;
   if (appState.currentMonth > 11) appState.currentMonth = 0;
   if (appState.currentMonth < 0) appState.currentMonth = 11;
   renderActivities();
-};
+}
 
-window.renderActivities = function() {
+function renderActivities() {
   document.getElementById('current-month').textContent = MONTHS_IT[appState.currentMonth];
   const monthActivities = appState.activities.filter(a => a.month === appState.currentMonth);
   const tbody = document.getElementById('activities-table');
-  
   if (monthActivities.length === 0) {
     tbody.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--gray);">Nessuna attività</td></tr>';
   } else {
-    tbody.innerHTML = monthActivities.map(a => `
-      <tr>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td>
-        <td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = monthActivities.map(a => `<tr><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td></tr>`).join('');
   }
-  
   const total = monthActivities.length;
   const hoursPlan = monthActivities.reduce((sum, a) => sum + a.hoursPlan, 0);
   const hoursActual = monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
   const cost = hoursActual * appState.HOURLY_RATE;
-  
   document.getElementById('month-total').textContent = total;
   document.getElementById('month-hours-plan').textContent = hoursPlan.toFixed(1);
   document.getElementById('month-hours-actual').textContent = hoursActual.toFixed(1);
   document.getElementById('month-cost').textContent = `€${cost.toFixed(0)}`;
-  
   updateProjectHours();
-};
+}
 
-window.deleteActivity = function(id) {
+function deleteActivity(id) {
   appState.activities = appState.activities.filter(a => a.id !== id);
   saveData();
   renderActivities();
   updateDashboard();
-};
+}
 
-window.renderProjects = function() {
+function renderProjects() {
   const container = document.getElementById('projects-list');
   if (appState.projects.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray);width:100%;"><i class="fas fa-folder-open" style="font-size:64px;margin-bottom:20px;opacity:0.5;"></i><p>Nessun progetto</p></div>';
     return;
   }
-  
   container.innerHTML = appState.projects.map(p => {
     const percent = p.budget > 0 ? (p.used / p.budget * 100) : 0;
     const remaining = p.budget - p.used;
-    
-    return `<div style="background:white;border:2px solid var(--border);border-radius:10px;padding:20px;min-width:350px;flex-shrink:0;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;">
-        <div>
-          <div style="color:var(--secondary);font-weight:600;font-size:12px;margin-bottom:5px;">👤 ${p.client}</div>
-          <h4 style="color:var(--primary);margin-bottom:5px;">${p.name}</h4>
-          <div style="color:var(--gray);font-size:13px;">👨‍💼 ${p.person}</div>
-        </div>
-        <button onclick="deleteProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;">
-        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Budget Ore</div><div style="font-weight:700;color:var(--primary);">${p.budget}h</div></div>
-        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Utilizzate</div><div style="font-weight:700;color:var(--primary);">${p.used.toFixed(1)}h</div></div>
-        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Rimanenti</div><div style="font-weight:700;color:var(--primary);">${remaining.toFixed(1)}h</div></div>
-        <div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Tariffa</div><div style="font-weight:700;color:var(--success);">€${p.rate}/h</div></div>
-      </div>
-      <div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;">
-        <div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:${Math.min(percent, 100)}%;"></div>
-      </div>
-      <div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div>
-    </div>`;
+    return `<div style="background:white;border:2px solid var(--border);border-radius:10px;padding:20px;min-width:350px;flex-shrink:0;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;"><div><div style="color:var(--secondary);font-weight:600;font-size:12px;margin-bottom:5px;">👤 ${p.client}</div><h4 style="color:var(--primary);margin-bottom:5px;">${p.name}</h4><div style="color:var(--gray);font-size:13px;">👨‍💼 ${p.person}</div></div><button onclick="deleteProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;"><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Budget Ore</div><div style="font-weight:700;color:var(--primary);">${p.budget}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Utilizzate</div><div style="font-weight:700;color:var(--primary);">${p.used.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Rimanenti</div><div style="font-weight:700;color:var(--primary);">${remaining.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Tariffa</div><div style="font-weight:700;color:var(--success);">€${p.rate}/h</div></div></div><div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:${Math.min(percent, 100)}%;"></div></div><div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div></div>`;
   }).join('');
-};
+}
 
-window.deleteProject = function(id) {
+function deleteProject(id) {
   appState.projects = appState.projects.filter(p => p.id !== id);
   saveData();
   updateProjectDropdown();
   renderProjects();
-};
+}
 
-window.updateProjectHours = function() {
+function updateProjectHours() {
   appState.projects.forEach(p => {
     p.used = appState.activities.filter(a => a.project === p.name).reduce((sum, a) => sum + a.hoursActual, 0);
   });
   renderProjects();
-};
+}
 
-window.updateDashboard = function() {
+function updateDashboard() {
   const totalActivities = appState.activities.length;
   const completedActivities = appState.activities.filter(a => a.progress >= 100).length;
   const totalHoursPlan = appState.activities.reduce((sum, a) => sum + a.hoursPlan, 0);
   const totalHoursActual = appState.activities.reduce((sum, a) => sum + a.hoursActual, 0);
   const totalCost = totalHoursActual * appState.HOURLY_RATE;
-  
   document.getElementById('stat-activities').textContent = totalActivities;
   document.getElementById('stat-completed').textContent = completedActivities;
   document.getElementById('stat-hours').textContent = totalHoursPlan.toFixed(1);
   document.getElementById('stat-hours-actual').textContent = totalHoursActual.toFixed(1);
   document.getElementById('stat-cost').textContent = `€${totalCost.toFixed(0)}`;
-  
   const personHours = {};
   appState.activities.forEach(a => {
     if (!personHours[a.person]) personHours[a.person] = { plan: 0, actual: 0 };
     personHours[a.person].plan += a.hoursPlan;
     personHours[a.person].actual += a.hoursActual;
   });
-  
   if (appState.charts.hoursByPerson) appState.charts.hoursByPerson.destroy();
   const ctx1 = document.getElementById('hoursByPersonChart');
   if (ctx1) {
@@ -456,12 +398,10 @@ window.updateDashboard = function() {
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
-  
   const statusCount = { 'Da Iniziare': 0, 'In Corso': 0, 'Completato': 0, 'In Attesa': 0 };
   appState.activities.forEach(a => {
     if (statusCount[a.status] !== undefined) statusCount[a.status]++;
   });
-  
   if (appState.charts.status) appState.charts.status.destroy();
   const ctx2 = document.getElementById('statusChart');
   if (ctx2) {
@@ -474,12 +414,10 @@ window.updateDashboard = function() {
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
-  
   const monthlyData = MONTHS.map((_, i) => {
     const monthActivities = appState.activities.filter(a => a.month === i);
     return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
   });
-  
   if (appState.charts.monthly) appState.charts.monthly.destroy();
   const ctx3 = document.getElementById('monthlyChart');
   if (ctx3) {
@@ -499,13 +437,12 @@ window.updateDashboard = function() {
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
   }
-};
+}
 
-window.exportToExcel = function() {
+function exportToExcel() {
   try {
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet('Attività');
-    
     ws.columns = [
       { header: 'Data', key: 'date', width: 12 },
       { header: 'Persona', key: 'person', width: 18 },
@@ -517,10 +454,8 @@ window.exportToExcel = function() {
       { header: 'Avanzamento %', key: 'progress', width: 14 },
       { header: 'Stato', key: 'status', width: 14 }
     ];
-    
     ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E79' } };
     ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    
     appState.activities.forEach(a => {
       const cost = a.hoursActual * appState.HOURLY_RATE;
       ws.addRow({
@@ -535,7 +470,6 @@ window.exportToExcel = function() {
         status: a.status
       });
     });
-    
     workbook.xlsx.writeBuffer().then(buffer => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -550,18 +484,16 @@ window.exportToExcel = function() {
   } catch (e) {
     alert('Errore durante l\'esportazione');
   }
-};
+}
 
-window.exportData = function() {
+function exportData() {
   const data = {
     activities: appState.activities,
     projects: appState.projects,
     timestamp: new Date().toISOString()
   };
-  
   const now = new Date();
   const filename = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}.reg`;
-  
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -571,14 +503,12 @@ window.exportData = function() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  
   alert('✅ Dati esportati: ' + filename);
-};
+}
 
-window.importData = function(event) {
+function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
-  
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -586,21 +516,18 @@ window.importData = function(event) {
       appState.activities = data.activities || [];
       appState.projects = data.projects || [];
       saveData();
-      
       renderActivities();
       renderProjects();
       updateDashboard();
       updateProjectDropdown();
-      
       alert('✅ Dati importati da: ' + file.name);
     } catch (error) {
       alert('❌ Errore: file non valido');
     }
   };
   reader.readAsText(file);
-  
   document.getElementById('import-file').value = '';
-};
+}
 </script>
 </body>
 </html>
