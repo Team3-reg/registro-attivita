@@ -181,8 +181,13 @@ const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Lugl
 
 document.getElementById('login-btn').addEventListener('click', function() {
   const provider = new firebase.auth.OAuthProvider('microsoft.com');
-  provider.setCustomParameters({ tenant: 'common' });
+  provider.addScopes(['openid', 'profile', 'email']);
+  provider.setCustomParameters({
+    tenant: 'common',
+    prompt: 'select_account'
+  });
   auth.signInWithPopup(provider).catch(error => {
+    console.error('Errore login:', error);
     document.getElementById('login-error').textContent = 'Errore: ' + error.message;
     document.getElementById('login-error').style.display = 'block';
   });
