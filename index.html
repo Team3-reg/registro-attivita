@@ -23,6 +23,8 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .btn-success:hover { background: #1e7e34; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover { background: #c0392b; }
+.btn-warning { background: #F39C12; color: white; }
+.btn-warning:hover { background: #D68910; }
 .nav-tabs { display: flex; background: var(--light); border-bottom: 2px solid var(--border); overflow-x: auto; }
 .nav-tab { padding: 15px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: var(--gray); transition: all 0.3s ease; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .nav-tab:hover { color: var(--primary); background: rgba(31,78,121,0.05); }
@@ -43,6 +45,13 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .login-box h1 { color: var(--primary); margin-bottom: 30px; font-size: 28px; }
 .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; }
 .login-box button { width: 100%; padding: 12px; font-size: 16px; margin-top: 20px; }
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+.modal-content { background-color: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { color: var(--primary); }
+.close { color: var(--gray); font-size: 28px; font-weight: bold; cursor: pointer; }
+.close:hover { color: var(--primary); }
+.modal-input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -110,7 +119,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px;">
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Nome Cliente</label><input type="text" id="project-client" placeholder="es. Acme" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Nome Progetto</label><input type="text" id="project-name" placeholder="es. Website" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
-<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Responsabile</label><select id="project-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="">Seleziona...</option><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Responsabile</label><input type="text" id="project-person" placeholder="Nome responsabile" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Budget Ore</label><input type="number" id="project-budget" placeholder="120" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Tariffa €/h</label><input type="number" id="project-rate" value="35" min="0" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Scadenza</label><input type="date" id="project-deadline" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
@@ -129,7 +138,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 <h3 style="color:var(--primary);margin-bottom:15px;">Aggiungi Attività</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px;">
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Data</label><input type="date" id="activity-date" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
-<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Persona</label><select id="activity-person" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="">Seleziona...</option><option value="Francesco Marzaro">Francesco Marzaro</option><option value="Roberto Zampieri">Roberto Zampieri</option><option value="Saverio Manduca">Saverio Manduca</option></select></div>
+<div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Persona</label><input type="text" id="activity-person" placeholder="Nome persona" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Progetto</label><select id="activity-project" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"><option value="">Seleziona...</option></select></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Attività</label><input type="text" id="activity-name" placeholder="Descrizione" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
 <div><label style="font-weight:600;color:var(--primary);margin-bottom:5px;display:block;">Ore Pianificate</label><input type="number" id="activity-hours-plan" placeholder="0" min="0" step="0.5" style="padding:10px;border:2px solid var(--border);border-radius:6px;width:100%;"></div>
@@ -161,9 +170,53 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 </div>
 </div>
 
+<div id="editProjectModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h2>Modifica Progetto</h2>
+<span class="close" onclick="closeEditProjectModal()">&times;</span>
+</div>
+<input type="text" id="edit-project-client" class="modal-input" placeholder="Nome Cliente">
+<input type="text" id="edit-project-name" class="modal-input" placeholder="Nome Progetto">
+<input type="text" id="edit-project-person" class="modal-input" placeholder="Responsabile">
+<input type="number" id="edit-project-budget" class="modal-input" placeholder="Budget Ore" min="0">
+<input type="number" id="edit-project-rate" class="modal-input" placeholder="Tariffa €/h" min="0">
+<input type="date" id="edit-project-deadline" class="modal-input">
+<div style="display:flex;gap:10px;margin-top:20px;">
+<button class="btn btn-success" onclick="saveEditProject()" style="flex:1;"><i class="fas fa-save"></i> Salva</button>
+<button class="btn btn-danger" onclick="closeEditProjectModal()" style="flex:1;"><i class="fas fa-times"></i> Annulla</button>
+</div>
+</div>
+</div>
+
+<div id="editActivityModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h2>Modifica Attività</h2>
+<span class="close" onclick="closeEditActivityModal()">&times;</span>
+</div>
+<input type="date" id="edit-activity-date" class="modal-input">
+<input type="text" id="edit-activity-person" class="modal-input" placeholder="Persona">
+<select id="edit-activity-project" class="modal-input"><option value="">Seleziona progetto...</option></select>
+<input type="text" id="edit-activity-name" class="modal-input" placeholder="Attività">
+<input type="number" id="edit-activity-hours-plan" class="modal-input" placeholder="Ore Pianificate" min="0" step="0.5">
+<input type="number" id="edit-activity-hours-actual" class="modal-input" placeholder="Ore Effettive" min="0" step="0.5">
+<input type="range" id="edit-activity-progress" min="0" max="100" value="0" style="width:100%;margin:10px 0;">
+<span id="edit-progress-value">0%</span>
+<select id="edit-activity-status" class="modal-input"><option value="Da Iniziare">Da Iniziare</option><option value="In Corso">In Corso</option><option value="Completato">Completato</option><option value="In Attesa">In Attesa</option></select>
+<textarea id="edit-activity-notes" class="modal-input" placeholder="Note..." style="min-height:80px;"></textarea>
+<div style="display:flex;gap:10px;margin-top:20px;">
+<button class="btn btn-success" onclick="saveEditActivity()" style="flex:1;"><i class="fas fa-save"></i> Salva</button>
+<button class="btn btn-danger" onclick="closeEditActivityModal()" style="flex:1;"><i class="fas fa-times"></i> Annulla</button>
+</div>
+</div>
+</div>
+
 <script>
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35 };
+let editingProjectId = null;
+let editingActivityId = null;
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 let charts = {};
@@ -221,6 +274,9 @@ function initializeAppUI() {
   document.getElementById('activity-progress').addEventListener('input', function() {
     document.getElementById('progress-value').textContent = this.value + '%';
   });
+  document.getElementById('edit-activity-progress').addEventListener('input', function() {
+    document.getElementById('edit-progress-value').textContent = this.value + '%';
+  });
 }
 
 function switchTab(tab, element) {
@@ -242,7 +298,7 @@ function switchTab(tab, element) {
 function addProject() {
   const client = document.getElementById('project-client').value.trim();
   const name = document.getElementById('project-name').value.trim();
-  const person = document.getElementById('project-person').value;
+  const person = document.getElementById('project-person').value.trim();
   
   if (!client || !name || !person) { 
     alert('Compila cliente, nome progetto e responsabile'); 
@@ -273,10 +329,12 @@ function addProject() {
 function updateProjectDropdown() {
   const select = document.getElementById('activity-project');
   select.innerHTML = '<option value="">Seleziona...</option>' + appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
+  const editSelect = document.getElementById('edit-activity-project');
+  editSelect.innerHTML = '<option value="">Seleziona...</option>' + appState.projects.map(p => `<option value="${p.name}">${p.client} - ${p.name}</option>`).join('');
 }
 
 function addActivity() {
-  const person = document.getElementById('activity-person').value;
+  const person = document.getElementById('activity-person').value.trim();
   const name = document.getElementById('activity-name').value.trim();
   
   if (!person || !name) { 
@@ -306,6 +364,7 @@ function addActivity() {
   renderActivities();
   updateDashboard();
   document.getElementById('activity-name').value = '';
+  document.getElementById('activity-person').value = '';
   document.getElementById('activity-hours-plan').value = '';
   document.getElementById('activity-hours-actual').value = '';
   document.getElementById('activity-progress').value = '0';
@@ -329,7 +388,7 @@ function renderActivities() {
   if (monthActivities.length === 0) {
     tbody.innerHTML = '<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--gray);">Nessuna attività</td></tr>';
   } else {
-    tbody.innerHTML = monthActivities.map(a => `<tr><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+    tbody.innerHTML = monthActivities.map(a => `<tr><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${new Date(a.date).toLocaleDateString('it-IT')}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.person}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.project}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.name}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursPlan}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.hoursActual}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);color:var(--success);font-weight:600;">€${(a.hoursActual * appState.HOURLY_RATE).toFixed(0)}</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);">${a.progress}%</td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><span style="display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span></td><td style="padding:12px 15px;border-bottom:1px solid var(--border);"><button onclick="editActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--warning);color:white;margin-right:5px;"><i class="fas fa-edit"></i></button><button onclick="deleteActivity(${a.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></td></tr>`).join('');
   }
   
   const total = monthActivities.length;
@@ -351,6 +410,50 @@ function deleteActivity(id) {
   updateDashboard();
 }
 
+function editActivity(id) {
+  const activity = appState.activities.find(a => a.id === id);
+  if (!activity) return;
+  
+  editingActivityId = id;
+  document.getElementById('edit-activity-date').value = activity.date;
+  document.getElementById('edit-activity-person').value = activity.person;
+  document.getElementById('edit-activity-project').value = activity.project;
+  document.getElementById('edit-activity-name').value = activity.name;
+  document.getElementById('edit-activity-hours-plan').value = activity.hoursPlan;
+  document.getElementById('edit-activity-hours-actual').value = activity.hoursActual;
+  document.getElementById('edit-activity-progress').value = activity.progress;
+  document.getElementById('edit-progress-value').textContent = activity.progress + '%';
+  document.getElementById('edit-activity-status').value = activity.status;
+  document.getElementById('edit-activity-notes').value = activity.notes;
+  
+  document.getElementById('editActivityModal').style.display = 'block';
+}
+
+function saveEditActivity() {
+  const activity = appState.activities.find(a => a.id === editingActivityId);
+  if (!activity) return;
+  
+  activity.date = document.getElementById('edit-activity-date').value;
+  activity.person = document.getElementById('edit-activity-person').value;
+  activity.project = document.getElementById('edit-activity-project').value;
+  activity.name = document.getElementById('edit-activity-name').value;
+  activity.hoursPlan = parseFloat(document.getElementById('edit-activity-hours-plan').value) || 0;
+  activity.hoursActual = parseFloat(document.getElementById('edit-activity-hours-actual').value) || 0;
+  activity.progress = parseInt(document.getElementById('edit-activity-progress').value) || 0;
+  activity.status = document.getElementById('edit-activity-status').value;
+  activity.notes = document.getElementById('edit-activity-notes').value;
+  
+  saveData();
+  renderActivities();
+  updateDashboard();
+  closeEditActivityModal();
+}
+
+function closeEditActivityModal() {
+  document.getElementById('editActivityModal').style.display = 'none';
+  editingActivityId = null;
+}
+
 function renderProjects() {
   const container = document.getElementById('projects-list');
   if (appState.projects.length === 0) {
@@ -361,7 +464,7 @@ function renderProjects() {
   container.innerHTML = appState.projects.map(p => {
     const percent = p.budget > 0 ? (p.used / p.budget * 100) : 0;
     const remaining = p.budget - p.used;
-    return `<div style="background:white;border:2px solid var(--border);border-radius:10px;padding:20px;min-width:350px;flex-shrink:0;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;"><div><div style="color:var(--secondary);font-weight:600;font-size:12px;margin-bottom:5px;">👤 ${p.client}</div><h4 style="color:var(--primary);margin-bottom:5px;">${p.name}</h4><div style="color:var(--gray);font-size:13px;">👨‍💼 ${p.person}</div></div><button onclick="deleteProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;"><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Budget Ore</div><div style="font-weight:700;color:var(--primary);">${p.budget}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Utilizzate</div><div style="font-weight:700;color:var(--primary);">${p.used.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Rimanenti</div><div style="font-weight:700;color:var(--primary);">${remaining.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Tariffa</div><div style="font-weight:700;color:var(--success);">€${p.rate}/h</div></div></div><div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:${Math.min(percent, 100)}%;"></div></div><div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div></div>`;
+    return `<div style="background:white;border:2px solid var(--border);border-radius:10px;padding:20px;min-width:350px;flex-shrink:0;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;"><div><div style="color:var(--secondary);font-weight:600;font-size:12px;margin-bottom:5px;">👤 ${p.client}</div><h4 style="color:var(--primary);margin-bottom:5px;">${p.name}</h4><div style="color:var(--gray);font-size:13px;">👨‍💼 ${p.person}</div></div><div style="display:flex;gap:5px;"><button onclick="editProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--warning);color:white;"><i class="fas fa-edit"></i></button><button onclick="deleteProject(${p.id})" style="padding:6px 10px;border:none;border-radius:4px;cursor:pointer;background:var(--danger);color:white;"><i class="fas fa-trash"></i></button></div></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;"><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Budget Ore</div><div style="font-weight:700;color:var(--primary);">${p.budget}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Utilizzate</div><div style="font-weight:700;color:var(--primary);">${p.used.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Ore Rimanenti</div><div style="font-weight:700;color:var(--primary);">${remaining.toFixed(1)}h</div></div><div style="background:var(--light);padding:10px;border-radius:6px;"><div style="font-size:12px;color:var(--gray);">Tariffa</div><div style="font-weight:700;color:var(--success);">€${p.rate}/h</div></div></div><div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:${Math.min(percent, 100)}%;"></div></div><div style="font-size:12px;color:var(--gray);">${percent.toFixed(1)}% ore utilizzato</div></div>`;
   }).join('');
 }
 
@@ -370,6 +473,43 @@ function deleteProject(id) {
   saveData();
   updateProjectDropdown();
   renderProjects();
+}
+
+function editProject(id) {
+  const project = appState.projects.find(p => p.id === id);
+  if (!project) return;
+  
+  editingProjectId = id;
+  document.getElementById('edit-project-client').value = project.client;
+  document.getElementById('edit-project-name').value = project.name;
+  document.getElementById('edit-project-person').value = project.person;
+  document.getElementById('edit-project-budget').value = project.budget;
+  document.getElementById('edit-project-rate').value = project.rate;
+  document.getElementById('edit-project-deadline').value = project.deadline;
+  
+  document.getElementById('editProjectModal').style.display = 'block';
+}
+
+function saveEditProject() {
+  const project = appState.projects.find(p => p.id === editingProjectId);
+  if (!project) return;
+  
+  project.client = document.getElementById('edit-project-client').value;
+  project.name = document.getElementById('edit-project-name').value;
+  project.person = document.getElementById('edit-project-person').value;
+  project.budget = parseFloat(document.getElementById('edit-project-budget').value) || 0;
+  project.rate = parseFloat(document.getElementById('edit-project-rate').value) || 35;
+  project.deadline = document.getElementById('edit-project-deadline').value;
+  
+  saveData();
+  updateProjectDropdown();
+  renderProjects();
+  closeEditProjectModal();
+}
+
+function closeEditProjectModal() {
+  document.getElementById('editProjectModal').style.display = 'none';
+  editingProjectId = null;
 }
 
 function updateProjectHours() {
