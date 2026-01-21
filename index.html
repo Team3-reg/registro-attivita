@@ -7,8 +7,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { --primary: #1F4E79; --secondary: #2E86C1; --success: #27AE60; --danger: #E74C3C; --light: #F8F9FA; --gray: #6C757D; --border: #DEE2E6; }
@@ -43,16 +41,18 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 400px; }
 .login-box h1 { color: var(--primary); margin-bottom: 30px; font-size: 28px; }
-.login-box button { width: 100%; padding: 15px; font-size: 16px; margin-top: 20px; }
+.login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; }
+.login-box button { width: 100%; padding: 12px; font-size: 16px; margin-top: 20px; }
 </style>
 </head>
 <body>
 <div id="login-screen" class="login-screen">
 <div class="login-box">
 <h1><i class="fas fa-tasks"></i> Registro Attività</h1>
-<p style="color: var(--gray); margin-bottom: 30px;">Accedi con il tuo account Microsoft</p>
-<button class="btn btn-secondary" id="login-btn" style="width: 100%; padding: 15px; font-size: 16px;">
-<i class="fas fa-sign-in-alt"></i> Accedi con Microsoft
+<p style="color: var(--gray); margin-bottom: 30px;">Accedi con la tua email</p>
+<input type="email" id="login-email" placeholder="La tua email" style="margin-bottom: 10px;">
+<button class="btn btn-secondary" onclick="login()" style="width: 100%; padding: 12px; font-size: 16px;">
+<i class="fas fa-sign-in-alt"></i> Accedi
 </button>
 <p id="login-error" style="color: var(--danger); margin-top: 15px; display: none;"></p>
 </div>
@@ -162,55 +162,35 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBrjslNq0ENztbSmYcSKrVv0_aehzo27xg",
-  authDomain: "registro-attivita-1ecab.firebaseapp.com",
-  projectId: "registro-attivita-1ecab",
-  storageBucket: "registro-attivita-1ecab.firebasestorage.app",
-  messagingSenderId: "754694968919",
-  appId: "1:754694968919:web:d6ee283c8d3380c5043512"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35, charts: {} };
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
-document.getElementById('login-btn').addEventListener('click', function() {
-  const provider = new firebase.auth.OAuthProvider('microsoft.com');
-  provider.addScopes(['openid', 'profile', 'email']);
-  provider.setCustomParameters({
-    tenant: 'common',
-    prompt: 'select_account'
-  });
-  auth.signInWithPopup(provider).catch(error => {
-    console.error('Errore login:', error);
-    document.getElementById('login-error').textContent = 'Errore: ' + error.message;
+function login() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    document.getElementById('login-error').textContent = 'Inserisci un\'email';
     document.getElementById('login-error').style.display = 'block';
-  });
-});
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    document.getElementById('user-name').textContent = user.email;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = 'block';
-    loadData();
-    initializeAppUI();
-  } else {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app-screen').style.display = 'none';
+    return;
   }
-});
+  currentUser = email;
+  document.getElementById('user-name').textContent = email;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  loadData();
+  initializeAppUI();
+}
 
-function logout() { auth.signOut(); }
+function logout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-email').value = '';
+}
 
 function loadData() {
-  const data = localStorage.getItem('appData_' + currentUser.uid);
+  const data = localStorage.getItem('appData_' + currentUser);
   if (data) {
     try {
       const parsed = JSON.parse(data);
@@ -221,7 +201,7 @@ function loadData() {
 }
 
 function saveData() { 
-  localStorage.setItem('appData_' + currentUser.uid, JSON.stringify(appState)); 
+  localStorage.setItem('appData_' + currentUser, JSON.stringify(appState)); 
 }
 
 function initializeAppUI() {
