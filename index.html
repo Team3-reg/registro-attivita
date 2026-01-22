@@ -405,10 +405,12 @@ function renderActivities() {
 }
 
 function deleteActivity(id) {
-  appState.activities = appState.activities.filter(a => a.id !== id);
-  saveData();
-  renderActivities();
-  updateDashboard();
+  if (confirm('Sei sicuro di voler eliminare questa attività?')) {
+    appState.activities = appState.activities.filter(a => a.id !== id);
+    saveData();
+    renderActivities();
+    updateDashboard();
+  }
 }
 
 function editActivity(id) {
@@ -470,10 +472,12 @@ function renderProjects() {
 }
 
 function deleteProject(id) {
-  appState.projects = appState.projects.filter(p => p.id !== id);
-  saveData();
-  updateProjectDropdown();
-  renderProjects();
+  if (confirm('Sei sicuro di voler eliminare questo progetto?')) {
+    appState.projects = appState.projects.filter(p => p.id !== id);
+    saveData();
+    updateProjectDropdown();
+    renderProjects();
+  }
 }
 
 function editProject(id) {
