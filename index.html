@@ -652,6 +652,9 @@ function exportToExcel() {
 }
 
 function exportData() {
+  if (!confirm('Vuoi esportare i dati? Ti verrà chiesto dove salvarli.')) {
+    return;
+  }
   const data = {
     activities: appState.activities,
     projects: appState.projects,
