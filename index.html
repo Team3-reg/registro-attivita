@@ -23,8 +23,6 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .btn-success:hover { background: #1e7e34; }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover { background: #c0392b; }
-.btn-warning { background: #F39C12; color: white; }
-.btn-warning:hover { background: #D68910; }
 .nav-tabs { display: flex; background: var(--light); border-bottom: 2px solid var(--border); overflow-x: auto; }
 .nav-tab { padding: 15px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: var(--gray); transition: all 0.3s ease; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .nav-tab:hover { color: var(--primary); background: rgba(31,78,121,0.05); }
@@ -46,8 +44,9 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; }
 .login-box button { width: 100%; padding: 12px; font-size: 16px; margin-top: 20px; }
 .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-.modal-content { background-color: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-content { background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; position: fixed; cursor: move; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; cursor: grab; user-select: none; }
+.modal-header:active { cursor: grabbing; }
 .modal-header h2 { color: var(--primary); }
 .close { color: var(--gray); font-size: 28px; font-weight: bold; cursor: pointer; }
 .close:hover { color: var(--primary); }
@@ -211,15 +210,45 @@ table { table-layout: auto; }
 <button class="btn btn-danger" onclick="closeEditActivityModal()" style="flex:1;"><i class="fas fa-times"></i> Annulla</button>
 </div>
 </div>
-</div
+</div>
+
 <script>
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35 };
 let editingProjectId = null;
 let editingActivityId = null;
+let draggedModal = null;
+let offsetX = 0;
+let offsetY = 0;
+
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 let charts = {};
+
+// DRAG MODAL
+document.addEventListener('mousedown', function(e) {
+  const modalHeader = e.target.closest('.modal-header');
+  if (modalHeader) {
+    draggedModal = modalHeader.closest('.modal');
+    const rect = draggedModal.querySelector('.modal-content').getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+  }
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (draggedModal) {
+    const content = draggedModal.querySelector('.modal-content');
+    content.style.position = 'fixed';
+    content.style.left = (e.clientX - offsetX) + 'px';
+    content.style.top = (e.clientY - offsetY) + 'px';
+    content.style.margin = '0';
+  }
+});
+
+document.addEventListener('mouseup', function() {
+  draggedModal = null;
+});
 
 function login() {
   const email = document.getElementById('login-email').value.trim();
