@@ -211,8 +211,62 @@ table { table-layout: auto; }
 <button class="btn btn-danger" onclick="closeEditActivityModal()" style="flex:1;"><i class="fas fa-times"></i> Annulla</button>
 </div>
 </div>
-</div>
+</div
+.modal-content {
+  background-color: white;
+  margin: 5% auto;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  cursor: move;
+}
 
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  cursor: grab;
+  user-select: none;
+}
+
+.modal-header:active {
+  cursor: grabbing;
+}
+  
+let draggedModal = null;
+let offsetX = 0;
+let offsetY = 0;
+
+document.addEventListener('mousedown', function(e) {
+  const modalHeader = e.target.closest('.modal-header');
+  if (modalHeader) {
+    draggedModal = modalHeader.closest('.modal');
+    const rect = draggedModal.querySelector('.modal-content').getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+  }
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (draggedModal) {
+    const content = draggedModal.querySelector('.modal-content');
+    content.style.position = 'fixed';
+    content.style.left = (e.clientX - offsetX) + 'px';
+    content.style.top = (e.clientY - offsetY) + 'px';
+    content.style.margin = '0';
+  }
+});
+
+document.addEventListener('mouseup', function() {
+  draggedModal = null;
+});
+  
 <script>
 let currentUser = null;
 let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35 };
