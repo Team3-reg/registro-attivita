@@ -65,7 +65,7 @@ table { table-layout: auto; }
 <body>
 <div class="container">
 <div class="header">
-<div><h1><i class="fas fa-tasks"></i> Registro Attività Team</h1></div>
+<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;"><h1><i class="fas fa-tasks"></i> Registro Attività Team</h1><div style="display:flex;align-items:center;gap:10px;"><label style="color:white;font-weight:600;">Anno:</label><select id="year-selector" onchange="changeYear(this.value)" style="padding:10px 15px;border:2px solid white;border-radius:6px;background:rgba(255,255,255,0.1);color:white;font-weight:600;cursor:pointer;font-size:14px;"></select></div></div>
 <div class="header-right">
 <button class="btn btn-secondary" onclick="exportData()"><i class="fas fa-download"></i> Esporta</button>
 <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Importa</button>
@@ -76,6 +76,7 @@ table { table-layout: auto; }
 <div class="nav-tabs">
 <button class="nav-tab active" onclick="switchTab('dashboard',this)"><i class="fas fa-chart-line"></i> Dashboard</button>
 <button class="nav-tab" onclick="switchTab('progetti',this)"><i class="fas fa-folder"></i> Progetti</button>
+<button class="nav-tab" onclick="switchTab('andamento',this)"><i class="fas fa-chart-bar"></i> Andamento</button>
 <button class="nav-tab" onclick="switchTab('gennaio',this)"><i class="fas fa-calendar"></i> Gennaio</button>
 <button class="nav-tab" onclick="switchTab('febbraio',this)">Febbraio</button>
 <button class="nav-tab" onclick="switchTab('marzo',this)">Marzo</button>
@@ -102,10 +103,8 @@ table { table-layout: auto; }
 <div class="charts-grid">
 <div class="chart-container"><h3>Ore per Persona</h3><canvas id="hoursByPersonChart"></canvas></div>
 <div class="chart-container"><h3>Stato Attività</h3><canvas id="statusChart"></canvas></div>
-<div class="chart-container" style="grid-column:1/-1;"><h3>Andamento Mensile</h3><canvas id="monthlyChart"></canvas></div>
+<div class="chart-container"><h3>Progetti</h3><div id="projects-summary" style="display:flex;flex-direction:column;gap:8px;"></div></div>
 </div>
-<h2 style="color:var(--primary);margin-top:40px;margin-bottom:20px;">📋 Riepilogo Progetti</h2>
-<div id="projects-summary" class="project-summary-grid"></div>
 </div>
 <div id="progetti" class="dashboard">
 <h2 style="color:var(--primary);margin-bottom:20px;">📁 Gestione Progetti</h2>
@@ -208,7 +207,7 @@ table { table-layout: auto; }
 </div>
 
 <script>
-let appState = { activities: [], projects: [], currentMonth: 0, HOURLY_RATE: 35 };
+let appState = { activities: [], projects: [], currentMonth: 0, currentYear: 2026, HOURLY_RATE: 35 };
 let editingProjectId = null;
 let editingActivityId = null;
 let draggedModal = null;
@@ -267,6 +266,16 @@ function saveData() {
 }
 
 function initializeAppUI() {
+  // Popola il selettore di anno
+  const yearSelector = document.getElementById('year-selector');
+  for (let year = 2026; year <= 2050; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    if (year === appState.currentYear) option.selected = true;
+    yearSelector.appendChild(option);
+  }
+  
   document.getElementById('activity-date').valueAsDate = new Date();
   updateProjectDropdown();
   renderProjects();
@@ -280,6 +289,13 @@ function initializeAppUI() {
   });
 }
 
+function changeYear(year) {
+  appState.currentYear = parseInt(year);
+  renderActivities();
+  updateDashboard();
+  renderMonthlyChart();
+}
+
 function switchTab(tab, element) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   element.classList.add('active');
@@ -289,6 +305,9 @@ function switchTab(tab, element) {
     updateDashboard();
   } else if (tab === 'progetti') {
     document.getElementById('progetti').classList.add('active');
+  } else if (tab === 'andamento') {
+    document.getElementById('andamento').classList.add('active');
+    renderMonthlyChart();
   } else {
     document.getElementById('gennaio').classList.add('active');
     appState.currentMonth = MONTHS.indexOf(tab);
@@ -578,31 +597,6 @@ function updateDashboard() {
     });
   }
   
-  const monthlyData = MONTHS.map((_, i) => {
-    const monthActivities = appState.activities.filter(a => a.month === i);
-    return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
-  });
-  
-  if (charts.monthly) charts.monthly.destroy();
-  const ctx3 = document.getElementById('monthlyChart');
-  if (ctx3) {
-    charts.monthly = new Chart(ctx3, {
-      type: 'line',
-      data: {
-        labels: MONTHS_IT,
-        datasets: [{
-          label: 'Ore Mensili',
-          data: monthlyData,
-          borderColor: '#1F4E79',
-          backgroundColor: 'rgba(31,78,121,0.1)',
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-  }
-  
   renderProjectsSummary();
 }
 
@@ -820,6 +814,46 @@ function importData(event) {
   };
   reader.readAsText(file);
   document.getElementById('import-file').value = '';
+}
+
+function renderMonthlyChart() {
+  const monthlyData = MONTHS.map((_, i) => {
+    const monthActivities = appState.activities.filter(a => a.month === i);
+    return monthActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+  });
+  
+  if (charts.monthly) charts.monthly.destroy();
+  const ctx = document.getElementById('monthlyChart');
+  if (ctx) {
+    charts.monthly = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: MONTHS_IT,
+        datasets: [{
+          label: 'Ore Mensili',
+          data: monthlyData,
+          borderColor: '#1F4E79',
+          backgroundColor: 'rgba(31,78,121,0.1)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: '#1F4E79'
+        }]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'bottom' } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 5 }
+          }
+        }
+      }
+    });
+  }
 }
 
 // Initialize on page load
