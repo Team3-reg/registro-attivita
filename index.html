@@ -46,6 +46,20 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .close:hover { color: var(--primary); }
 .modal-input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 6px; font-size: 14px; }
 table { table-layout: auto; }
+.project-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.3s ease; }
+.project-card:hover { box-shadow: 0 5px 20px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: var(--primary); }
+.project-card h4 { color: var(--primary); margin-bottom: 10px; }
+.project-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.activity-item { background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+.activity-item-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+.activity-item-title { font-weight: 600; color: var(--primary); }
+.activity-item-person { font-size: 12px; color: var(--gray); }
+.activity-item-progress { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 8px 0; }
+.activity-item-progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+.activity-item-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; }
+.activity-item-stat { text-align: center; }
+.activity-item-stat-label { color: var(--gray); margin-bottom: 3px; }
+.activity-item-stat-value { font-weight: 700; color: var(--primary); }
 </style>
 </head>
 <body>
@@ -90,6 +104,8 @@ table { table-layout: auto; }
 <div class="chart-container"><h3>Stato Attività</h3><canvas id="statusChart"></canvas></div>
 <div class="chart-container" style="grid-column:1/-1;"><h3>Andamento Mensile</h3><canvas id="monthlyChart"></canvas></div>
 </div>
+<h2 style="color:var(--primary);margin-top:40px;margin-bottom:20px;">📋 Riepilogo Progetti</h2>
+<div id="projects-summary" class="project-summary-grid"></div>
 </div>
 <div id="progetti" class="dashboard">
 <h2 style="color:var(--primary);margin-bottom:20px;">📁 Gestione Progetti</h2>
@@ -586,6 +602,131 @@ function updateDashboard() {
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
   }
+  
+  renderProjectsSummary();
+}
+
+function renderProjectsSummary() {
+  const container = document.getElementById('projects-summary');
+  if (appState.projects.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--gray);width:100%;grid-column:1/-1;"><i class="fas fa-folder-open" style="font-size:48px;margin-bottom:15px;opacity:0.5;"></i><p>Nessun progetto</p></div>';
+    return;
+  }
+  
+  container.innerHTML = appState.projects.map(p => {
+    const projectActivities = appState.activities.filter(a => a.project === p.name);
+    const avgProgress = projectActivities.length > 0 ? Math.round(projectActivities.reduce((sum, a) => sum + a.progress, 0) / projectActivities.length) : 0;
+    const totalHours = projectActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+    const totalCost = totalHours * p.rate;
+    
+    return `<div class="project-card" onclick="showProjectDetails(${p.id})">
+      <h4>${p.name}</h4>
+      <div style="color:var(--gray);font-size:12px;margin-bottom:15px;">${p.client}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;">
+        <div style="background:var(--light);padding:10px;border-radius:6px;text-align:center;">
+          <div style="font-size:12px;color:var(--gray);">Attività</div>
+          <div style="font-weight:700;color:var(--primary);">${projectActivities.length}</div>
+        </div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;text-align:center;">
+          <div style="font-size:12px;color:var(--gray);">Avanzamento</div>
+          <div style="font-weight:700;color:var(--primary);">${avgProgress}%</div>
+        </div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;text-align:center;">
+          <div style="font-size:12px;color:var(--gray);">Ore</div>
+          <div style="font-weight:700;color:var(--primary);">${totalHours.toFixed(1)}h</div>
+        </div>
+        <div style="background:var(--light);padding:10px;border-radius:6px;text-align:center;">
+          <div style="font-size:12px;color:var(--gray);">Costo</div>
+          <div style="font-weight:700;color:var(--success);">€${totalCost.toFixed(0)}</div>
+        </div>
+      </div>
+      <div style="width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));width:${avgProgress}%;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showProjectDetails(projectId) {
+  const project = appState.projects.find(p => p.id === projectId);
+  if (!project) return;
+  
+  const projectActivities = appState.activities.filter(a => a.project === project.name);
+  const avgProgress = projectActivities.length > 0 ? Math.round(projectActivities.reduce((sum, a) => sum + a.progress, 0) / projectActivities.length) : 0;
+  const totalHours = projectActivities.reduce((sum, a) => sum + a.hoursActual, 0);
+  const totalCost = totalHours * project.rate;
+  
+  let html = `<div style="margin-bottom:20px;">
+    <h3 style="color:var(--primary);margin-bottom:10px;">${project.name}</h3>
+    <div style="color:var(--gray);font-size:13px;margin-bottom:15px;">
+      <div>👤 Cliente: ${project.client}</div>
+      <div>👨‍💼 Responsabile: ${project.person}</div>
+      <div>📅 Scadenza: ${project.deadline || 'Non specificata'}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+      <div style="background:var(--light);padding:12px;border-radius:6px;text-align:center;">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:5px;">Attività</div>
+        <div style="font-weight:700;color:var(--primary);font-size:18px;">${projectActivities.length}</div>
+      </div>
+      <div style="background:var(--light);padding:12px;border-radius:6px;text-align:center;">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:5px;">Avanzamento</div>
+        <div style="font-weight:700;color:var(--primary);font-size:18px;">${avgProgress}%</div>
+      </div>
+      <div style="background:var(--light);padding:12px;border-radius:6px;text-align:center;">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:5px;">Ore Totali</div>
+        <div style="font-weight:700;color:var(--primary);font-size:18px;">${totalHours.toFixed(1)}h</div>
+      </div>
+      <div style="background:var(--light);padding:12px;border-radius:6px;text-align:center;">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:5px;">Costo</div>
+        <div style="font-weight:700;color:var(--success);font-size:18px;">€${totalCost.toFixed(0)}</div>
+      </div>
+    </div>
+  </div>`
+  
+  if (projectActivities.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:var(--gray);"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:10px;opacity:0.5;"></i><p>Nessuna attività per questo progetto</p></div>';
+  } else {
+    html += '<div style="max-height:300px;overflow-y:auto;">';
+    projectActivities.forEach(a => {
+      html += `<div class="activity-item">
+        <div class="activity-item-header">
+          <div>
+            <div class="activity-item-title">${a.name}</div>
+            <div class="activity-item-person">${a.person}</div>
+          </div>
+          <span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#E3F2FD;color:#2E86C1;">${a.status}</span>
+        </div>
+        <div class="activity-item-progress">
+          <div class="activity-item-progress-bar" style="width:${a.progress}%;"></div>
+        </div>
+        <div class="activity-item-stats">
+          <div class="activity-item-stat">
+            <div class="activity-item-stat-label">Ore</div>
+            <div class="activity-item-stat-value">${a.hoursActual}h</div>
+          </div>
+          <div class="activity-item-stat">
+            <div class="activity-item-stat-label">Avanzamento</div>
+            <div class="activity-item-stat-value">${a.progress}%</div>
+          </div>
+          <div class="activity-item-stat">
+            <div class="activity-item-stat-label">Costo</div>
+            <div class="activity-item-stat-value">€${(a.hoursActual * project.rate).toFixed(0)}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'block';
+  modal.innerHTML = `<div class="modal-content" style="max-width:600px;width:90%;">${html}<div style="display:flex;gap:10px;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()" style="flex:1;"><i class="fas fa-times"></i> Chiudi</button></div></div>`;
+  document.body.appendChild(modal);
+  
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.remove();
+  });
 }
 
 function exportToExcel() {
